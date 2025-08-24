@@ -29,7 +29,7 @@ Cilj je da se unapredi proces održavanja u industriji smanjenjem neplaniranih k
 ---
 
 ##  Dokumentacija
- [Puni dokument sa detaljnim opisom sistema](docs/Predlog%20Projekta%20–%20Sistem%20Za%20Prediktivno%20Održavanje.pdf)
+ [Puni dokument sa detaljnim opisom sistema](docs/PredlogProjekta–SistemZaPrediktivnoOdržavanje.pdf)
 
 ---
 
