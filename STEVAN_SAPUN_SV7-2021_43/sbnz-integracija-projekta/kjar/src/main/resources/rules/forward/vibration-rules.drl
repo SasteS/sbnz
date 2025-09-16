@@ -1,0 +1,34 @@
+package rules.forward;
+
+import com.ftn.sbnz.model.models.Machine;
+import com.ftn.sbnz.model.enums.MachineStatus;
+
+rule "High vibration suspicious"
+when
+    $m : Machine( vibration > 7.1, status == MachineStatus.NORMAL )
+then
+    $m.setStatus(MachineStatus.SUSPICIOUS);
+    $m.addRecommendation("Proveri balans (balancing issue suspected).");
+    update($m);
+    System.out.println("Rule fired: High vibration suspicious for " + $m.getName());
+end
+
+rule "High temperature suspicious"
+when
+    $m : Machine( temperature > 85.0, status == MachineStatus.NORMAL )
+then
+    $m.setStatus(MachineStatus.SUSPICIOUS);
+    $m.addRecommendation("Proveri hlađenje (cooling issue suspected).");
+    update($m);
+    System.out.println("Rule fired: High temperature suspicious for " + $m.getName());
+end
+
+rule "At risk machine"
+when
+    $m : Machine( vibration > 7.1, temperature > 85.0, status != MachineStatus.RISKY )
+then
+    $m.setStatus(MachineStatus.RISKY);
+    $m.addRecommendation("Mašina u riziku: proveri ležajeve i balans.");
+    update($m);
+    System.out.println("Rule fired: At risk machine " + $m.getName());
+end
