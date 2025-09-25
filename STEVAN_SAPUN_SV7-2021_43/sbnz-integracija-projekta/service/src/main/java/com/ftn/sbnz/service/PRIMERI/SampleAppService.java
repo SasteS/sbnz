@@ -1,4 +1,4 @@
-package com.ftn.sbnz.service;
+package com.ftn.sbnz.service.PRIMERI;
 
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ftn.sbnz.model.events.Item;
+import com.ftn.sbnz.model.events.PRIMERI.Item;
 
 
 @Service

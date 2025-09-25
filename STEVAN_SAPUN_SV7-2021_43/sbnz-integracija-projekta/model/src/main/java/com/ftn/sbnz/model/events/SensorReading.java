@@ -1,20 +1,22 @@
-package com.ftn.sbnz.model.models;
+package com.ftn.sbnz.model.events;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Date;
 
 // Generic sensor reading. Have to use subclasses for domain-specific fields.
 public abstract class SensorReading implements Serializable {
     private String machineId;
     private double value;
-    private Instant timestamp;
+    // Was instant, now is Date because Drools CEP only supports java.util.Date or long for the @timestamp field
+    private Date timestamp; //private Instant timestamp;
 
-    protected SensorReading() { this.timestamp = Instant.now(); }
+    protected SensorReading() { this.timestamp = new Date(); }
 
-    protected SensorReading(String machineId, double value, Instant timestamp) {
+    protected SensorReading(String machineId, double value, Date timestamp) {
         this.machineId = machineId;
         this.value = value;
-        this.timestamp = timestamp == null ? Instant.now() : timestamp;
+        this.timestamp = timestamp == null ? new Date() : timestamp;
     }
 
     public String getMachineId() { return machineId; }
@@ -23,6 +25,6 @@ public abstract class SensorReading implements Serializable {
     public double getValue() { return value; }
     public void setValue(double value) { this.value = value; }
 
-    public Instant getTimestamp() { return timestamp; }
-    public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
+    public Date getTimestamp() { return timestamp; }
+    public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }
 }

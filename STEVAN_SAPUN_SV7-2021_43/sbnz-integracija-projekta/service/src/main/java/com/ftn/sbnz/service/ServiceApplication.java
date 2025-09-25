@@ -48,8 +48,11 @@ public class ServiceApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) {
-		Test testRunner = ctx.getBean(Test.class); // get Test from Spring
-		testRunner.runTest();
+//		Test testRunner = ctx.getBean(Test.class); // test for rules
+//		testRunner.runTest();
+
+//		CepService cepService = ctx.getBean(CepService.class); // test for CEP
+//		cepService.runCepExample();
 	}
 }
 

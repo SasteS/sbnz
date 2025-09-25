@@ -1,4 +1,4 @@
-package com.ftn.sbnz.service;
+package com.ftn.sbnz.service.PRIMERI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ftn.sbnz.model.events.Item;
+import com.ftn.sbnz.model.events.PRIMERI.Item;
 
 
 @RestController

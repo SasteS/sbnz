@@ -1,4 +1,4 @@
-package com.ftn.sbnz.service;
+package com.ftn.sbnz.service.PRIMERI;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,4 +1,4 @@
-package com.ftn.sbnz.model.events;
+package com.ftn.sbnz.model.events.PRIMERI;
 
 import java.io.Serializable;
 import java.util.Date;
