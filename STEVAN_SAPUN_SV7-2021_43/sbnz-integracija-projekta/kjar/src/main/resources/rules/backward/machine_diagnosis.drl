@@ -1,0 +1,63 @@
+//package rules.backward
+//
+//dialect "mvel"
+//
+//import com.ftn.sbnz.model.models.Machine
+//import com.ftn.sbnz.model.enums.MachineStatus
+//
+//// Logical fact used for reasoning (explanation or cause)
+//declare ReasoningFact
+//    machineId : String
+//    cause : String
+//end
+//
+//// ---------------------------
+//// Queries
+//// ---------------------------
+//query "CausesForMachine"(String $machineId)
+//    $r : ReasoningFact(machineId == $machineId)
+//end
+//
+//// ---------------------------
+//// Level 1 causes — direct from machine state
+//// ---------------------------
+//
+//rule "Critical due to temperature"
+//when
+//    $m : Machine(status == MachineStatus.CRITICAL, temperature > 90)
+//then
+//    insertLogical(new ReasoningFact($m.getId(),
+//        "Previsoka temperatura — moguće pregrevanje motora ili loše hlađenje."));
+//    System.out.println("BC rule fired: Critical due to temperature for " + $m.getName());
+//end
+//
+//rule "Electrical issue likely"
+//when
+//    $m : Machine(status == MachineStatus.CRITICAL, currentPercentOfRated > 120)
+//then
+//    insertLogical(new ReasoningFact($m.getId(),
+//        "Preopterećenje električnog kola — proveri električne komponente."));
+//    System.out.println("BC rule fired: Electrical issue likely for " + $m.getName());
+//end
+//
+//// ---------------------------
+//// Level 2 causes — derived from previous ReasoningFacts
+//// ---------------------------
+//
+//rule "Cooling system malfunction"
+//when
+//    $r : ReasoningFact(cause contains "loše hlađenje" || cause contains "previsoka temperatura")
+//then
+//    insertLogical(new ReasoningFact($r.machineId,
+//        "Mogući uzrok pregrevanja – neispravan ventilator ili zaprljan sistem hlađenja."));
+//    System.out.println("BC rule fired: Cooling system malfunction for " + $r.machineId);
+//end
+//
+//rule "Electrical insulation damaged"
+//when
+//    $r : ReasoningFact(cause contains "električne komponente" || cause contains "Preopterećenje električnog kola")
+//then
+//    insertLogical(new ReasoningFact($r.machineId,
+//        "Mogući uzrok – pregorela izolacija kablova ili loš kontakt."));
+//    System.out.println("BC rule fired: Electrical insulation damaged for " + $r.machineId);
+//end

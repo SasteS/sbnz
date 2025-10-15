@@ -1,11 +1,23 @@
-<kmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://jboss.org/kie/6.0.0/kmodule">
-    <kbase name="rules" packages="rules.forward">
-        <ksession name="k-session"/>
-    </kbase>
-    <kbase name="bwBase" packages="backward">
-        <ksession name="bwKsession"/>
-    </kbase>
-    <kbase name="cepKbase" eventProcessingMode="stream" packages="rules.cep">
-        <ksession name="cepKsession" clockType="pseudo"/>
-    </kbase>
+<!--<kmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://jboss.org/kie/6.0.0/kmodule">-->
+<!--    <kbase name="rules" packages="rules.forward">-->
+<!--        <ksession name="k-session"/>-->
+<!--    </kbase>-->
+<!--    <kbase name="bwBase" packages="rules.backward">-->
+<!--        <ksession name="bwKsession"/>-->
+<!--    </kbase>-->
+<!--    <kbase name="cepKbase" eventProcessingMode="stream" packages="rules.cep">-->
+<!--        <ksession name="cepKsession" clockType="pseudo"/>-->
+<!--    </kbase>-->
+<!--</kmodule>-->
+
+<kmodule xmlns="http://www.drools.org/xsd/kmodule">
+<kbase name="rules" packages="rules.forward">
+    <ksession name="k-session"/>
+</kbase>
+<kbase name="bwBase" packages="rules.backward">
+    <ksession name="bwKsession"/>
+</kbase>
+<kbase name="cepKbase" eventProcessingMode="stream" packages="rules.cep">
+    <ksession name="cepKsession" clockType="pseudo"/>
+</kbase>
 </kmodule>

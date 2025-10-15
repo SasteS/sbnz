@@ -1,0 +1,51 @@
+//package rules.backward
+//
+//dialect "mvel"
+//
+//import com.ftn.sbnz.model.models.Machine
+//import com.ftn.sbnz.model.backward.HypothesisDependency
+//import java.util.List
+//import java.util.Arrays
+//
+//// Initialize dependencies once
+//rule "Initialize hypothesis dependencies"
+//    salience 100
+//when
+//    not( HypothesisDependency(conclusion == "CriticalMachine") )
+//then
+//    System.out.println("Initializing backward chaining dependency tree...");
+//    insert(new HypothesisDependency("CriticalMachine", Arrays.asList("Overheating", "ElectricalOverload")));
+//    insert(new HypothesisDependency("Overheating", Arrays.asList("HighTemperature", "CoolantIssue")));
+//    insert(new HypothesisDependency("CoolantIssue", Arrays.asList("LowCoolantLevel", "PumpFailure")));
+//end
+//
+//// ------------------------
+//// TRUE BACKWARD CHAINING QUERY
+//// ------------------------
+//query proveHypothesis(String $goal)
+//    // Base facts directly provable from domain facts
+//    (
+//        exists( Machine( temperature > 90 ) and eval($goal == "HighTemperature") )
+//        or
+//        exists( Machine( currentPercentOfRated > 120 ) and eval($goal == "ElectricalOverload") )
+//        or
+//        exists( Machine( vibration > 10 ) and eval($goal == "PumpFailure") )
+//        or
+//        exists( Machine( temperature < 50 ) and eval($goal == "LowCoolantLevel") )
+//    )
+//    or
+//    (
+//        HypothesisDependency($c : conclusion == $goal, $pre : prerequisites)
+//        and not( String($p : this) from $pre and not proveHypothesis($p;) )
+//    )
+//end
+//
+//// ------------------------
+//// Rule: Confirm final hypothesis
+//// ------------------------
+//rule "Confirm CriticalMachine hypothesis"
+//when
+//    proveHypothesis("CriticalMachine";)
+//then
+//    System.out.println("✅ TRUE BACKWARD CHAINING: CriticalMachine hypothesis proven!");
+//end

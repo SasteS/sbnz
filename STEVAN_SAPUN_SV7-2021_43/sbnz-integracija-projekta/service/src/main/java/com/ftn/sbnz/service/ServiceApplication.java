@@ -2,6 +2,8 @@ package com.ftn.sbnz.service;
 
 import java.util.Arrays;
 
+import org.kie.api.builder.KieBuilder;
+import org.kie.api.builder.KieFileSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
@@ -36,14 +38,31 @@ public class ServiceApplication implements CommandLineRunner {
 		log.info(sb.toString());
 	}
 
+//	@Bean
+//	public KieContainer kieContainer() {
+//		KieServices ks = KieServices.Factory.get();
+//		KieContainer kContainer = ks
+//				.newKieContainer(ks.newReleaseId("com.ftn.sbnz", "kjar", "0.0.1-SNAPSHOT"));
+//		KieScanner kScanner = ks.newKieScanner(kContainer);
+//		kScanner.start(1000);
+//		return kContainer;
+//	}
+
 	@Bean
 	public KieContainer kieContainer() {
 		KieServices ks = KieServices.Factory.get();
-		KieContainer kContainer = ks
-				.newKieContainer(ks.newReleaseId("com.ftn.sbnz", "kjar", "0.0.1-SNAPSHOT"));
-		KieScanner kScanner = ks.newKieScanner(kContainer);
-		kScanner.start(1000);
-		return kContainer;
+
+		// 👇 this automatically reads kmodule.xml and all DRLs from classpath
+		KieContainer kieContainer = ks.getKieClasspathContainer();
+
+		// Optional: list all bases/sessions for sanity check
+		System.out.println("=== Loaded KieBases and KieSessions ===");
+		for (String base : kieContainer.getKieBaseNames()) {
+			System.out.println("KieBase: " + base);
+			System.out.println("  Sessions: " + kieContainer.getKieSessionNamesInKieBase(base));
+		}
+
+		return kieContainer;
 	}
 
 	@Override
