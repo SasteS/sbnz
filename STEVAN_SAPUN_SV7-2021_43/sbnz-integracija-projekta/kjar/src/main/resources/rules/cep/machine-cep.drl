@@ -22,44 +22,45 @@ import com.ftn.sbnz.model.enums.MachineStatus
 rule "High temperature 1 minute window"
 no-loop true
 when
-    $m : Machine( id == "M1" )
+    $m : Machine( status != MachineStatus.CRITICAL )
     accumulate(
         $t : TemperatureReading(machineId == $m.id, value > 100) over window:time(1m),
         $count : count($t)
     )
     eval($count >= 3)
 then
-    $m.setStatus(MachineStatus.CRITICAL);
-    if (!$m.getRecommendations().contains("Ponovljeno pregrevanje u poslednjem minutu – proveri sistem hlađenja i protok ulja.")) {
+    if ($m.getStatus() != MachineStatus.CRITICAL) {
+        $m.setStatus(MachineStatus.CRITICAL);
         $m.addRecommendation("Ponovljeno pregrevanje u poslednjem minutu – proveri sistem hlađenja i protok ulja.");
+        update($m);
+        System.out.println("Machine escalated to CRITICAL: " + $m.getName());
     }
-    update($m);
-    System.out.println("Rule fired: High temperature CEP for " + $m.getName());
 end
 
 // Rule 2: Vibration spikes in 5 minutes
 rule "High vibration 5 minute window"
 no-loop true
 when
-    $m : Machine(id == "M1")
+    $m : Machine( status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS) )
     accumulate(
         $v : VibrationReading(machineId == $m.id, value > 10) over window:time(5m),
         $count : count($v)
     )
     eval($count >= 3)
 then
-    $m.setStatus(MachineStatus.RISKY);
-    if (!$m.getRecommendations().contains("Učestale vibracije u poslednjih 5 minuta – proveri balans rotora i stanje ležajeva.")) {
+    if ($m.getStatus() == MachineStatus.NORMAL || $m.getStatus() == MachineStatus.SUSPICIOUS) {
+        $m.setStatus(MachineStatus.RISKY);
         $m.addRecommendation("Učestale vibracije u poslednjih 5 minuta – proveri balans rotora i stanje ležajeva.");
+        update($m);
+        System.out.println("Machine escalated to RISKY: " + $m.getName());
     }
-    update($m);
-    System.out.println("Rule fired: High vibration CEP for " + $m.getName());
 end
 
 // Rule 3: Combined vibration + temperature anomaly in 10 minutes
 rule "Vibration + Temperature anomaly 10 minutes"
+no-loop true
 when
-    $m : Machine(id == "M1")
+    $m : Machine( status != MachineStatus.CRITICAL )
     $vCount : Number() from accumulate(
         $v : VibrationReading(machineId == $m.id, value > 7.1) over window:time(10m),
         count($v)
@@ -70,8 +71,11 @@ when
     )
     eval($vCount >= 1 && $tCount >= 1)
 then
-    $m.setStatus(MachineStatus.RISKY);
-    $m.addRecommendation("Kombinacija povišene temperature i vibracija u poslednjih 10 minuta – mogući problem sa ležajevima ili podmazivanjem.");
-    update($m);
-    System.out.println("Rule fired: Combined CEP for " + $m.getName());
+    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
+        $m.setStatus(MachineStatus.RISKY);
+        $m.addRecommendation("Kombinacija povišene temperature i vibracija u poslednjih 10 minuta – mogući problem sa ležajevima ili podmazivanjem.");
+        update($m);
+        System.out.println("Machine escalated to RISKY (combined anomaly): " + $m.getName());
+    }
 end
+
