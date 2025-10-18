@@ -1,0 +1,4 @@
+package rules.template
+import com.ftn.sbnz.model.models.Machine;
+
+

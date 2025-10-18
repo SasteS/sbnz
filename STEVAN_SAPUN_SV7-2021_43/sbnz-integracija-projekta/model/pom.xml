@@ -59,6 +59,13 @@
 			<artifactId>drools-xml-support</artifactId>
 			<version>${drools.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.drools</groupId>
+			<artifactId>drools-templates</artifactId>
+			<version>${drools.version}</version> <!-- match your other Drools versions -->
+		</dependency>
+
 	</dependencies>
 
 	<build>

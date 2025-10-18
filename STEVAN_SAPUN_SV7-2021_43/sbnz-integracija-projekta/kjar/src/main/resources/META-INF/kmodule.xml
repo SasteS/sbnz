@@ -20,4 +20,7 @@
 <kbase name="cepKbase" eventProcessingMode="stream" packages="rules.cep">
     <ksession name="cepKsession" clockType="pseudo"/>
 </kbase>
+<kbase name="templateBase" packages="rules.template">
+    <ksession name="templateKsession"/>
+</kbase>
 </kmodule>

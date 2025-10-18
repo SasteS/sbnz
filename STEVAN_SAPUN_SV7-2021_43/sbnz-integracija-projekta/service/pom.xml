@@ -96,6 +96,18 @@
 			<version>${drools.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.drools</groupId>
+			<artifactId>drools-templates</artifactId>
+			<version>${drools.version}</version> <!-- match your other Drools versions -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.3</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
