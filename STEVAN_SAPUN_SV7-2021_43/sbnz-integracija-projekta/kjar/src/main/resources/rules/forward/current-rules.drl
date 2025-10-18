@@ -1,0 +1,13 @@
+package rules.forward
+import com.ftn.sbnz.model.models.Machine
+import com.ftn.sbnz.model.enums.MachineStatus
+
+rule "Current > 120% and overloadOccurred"
+when
+    $m : Machine( currentPercentOfRated > 120 )
+then
+    $m.setStatus(MachineStatus.CRITICAL);
+    $m.addRecommendation("Električno preopterećenje – hitno isključi mašinu!");
+    update($m);
+    System.out.println("Current > 120% and overloadOccurred, " + $m.getName());
+end

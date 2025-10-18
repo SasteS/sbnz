@@ -1,34 +1,25 @@
-package rules.forward;
+package rules.forward
+import com.ftn.sbnz.model.models.Machine
+import com.ftn.sbnz.model.enums.MachineStatus
 
-import com.ftn.sbnz.model.models.Machine;
-import com.ftn.sbnz.model.enums.MachineStatus;
-
-rule "High vibration suspicious"
+// --- Vibration above normal threshold ---
+rule "Vibration slightly high (Suspicious)"
 when
-    $m : Machine( vibration > 7.1, status == MachineStatus.NORMAL )
+    $m : Machine( vibration > 7.1 && vibration <= 10, status == MachineStatus.NORMAL )
 then
     $m.setStatus(MachineStatus.SUSPICIOUS);
-    $m.addRecommendation("Proveri balans (balancing issue suspected).");
+    $m.addRecommendation("Proveri balans rotora – blago povećane vibracije.");
     update($m);
-    System.out.println("Rule fired: High vibration suspicious for " + $m.getName());
+    System.out.println("Rule fired: Slightly high vibration → Suspicious for " + $m.getName());
 end
 
-rule "High temperature suspicious"
+// --- Very high vibration ---
+rule "Vibration very high (Risky)"
 when
-    $m : Machine( temperature > 85.0, status == MachineStatus.NORMAL )
-then
-    $m.setStatus(MachineStatus.SUSPICIOUS);
-    $m.addRecommendation("Proveri hlađenje (cooling issue suspected).");
-    update($m);
-    System.out.println("Rule fired: High temperature suspicious for " + $m.getName());
-end
-
-rule "At risk machine"
-when
-    $m : Machine( vibration > 7.1, temperature > 85.0, status != MachineStatus.RISKY )
+    $m : Machine( vibration > 10, status != MachineStatus.CRITICAL )
 then
     $m.setStatus(MachineStatus.RISKY);
-    $m.addRecommendation("Mašina u riziku: proveri ležajeve i balans.");
+    $m.addRecommendation("Jako povećane vibracije – proveri balans i ležajeve.");
     update($m);
-    System.out.println("Rule fired: At risk machine " + $m.getName());
+    System.out.println("Rule fired: High vibration → Risky for " + $m.getName());
 end

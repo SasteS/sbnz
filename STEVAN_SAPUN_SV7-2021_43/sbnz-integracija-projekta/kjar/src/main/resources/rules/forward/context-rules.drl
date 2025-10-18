@@ -1,0 +1,30 @@
+package rules.forward
+import com.ftn.sbnz.model.models.Machine
+import com.ftn.sbnz.model.enums.MachineStatus
+
+rule "PostMaintenance - rising temperature"
+when
+    $m : Machine( context == "PostMaintenance", temperature > 80 )
+then
+    System.out.println("Temperatura raste posle servisa za " + $m.getName());
+    $m.addRecommendation("Temperatura raste posle servisa – proveri servisni zahvat.");
+    update($m);
+end
+
+rule "HighLoad - increased vibration"
+when
+    $m : Machine( context == "HighLoad", vibration > 9 )
+then
+    $m.setStatus(MachineStatus.SUSPICIOUS);
+    $m.addRecommendation("Vibracije pri visokom opterećenju – proveri balans.");
+    update($m);
+end
+
+rule "Idle - abnormal temperature"
+when
+    $m : Machine( context == "Idle", temperature > 60 )
+then
+    $m.setStatus(MachineStatus.RISKY);
+    $m.addRecommendation("Temperatura previsoka u praznom hodu – proveri ventilaciju.");
+    update($m);
+end

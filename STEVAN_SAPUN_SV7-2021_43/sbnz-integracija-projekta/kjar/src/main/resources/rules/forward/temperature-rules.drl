@@ -1,0 +1,26 @@
+package rules.forward
+import com.ftn.sbnz.model.models.Machine
+import com.ftn.sbnz.model.enums.MachineStatus
+
+// --- Moderate overheat ---
+rule "Temperature > 85°C (Risky)"
+when
+    $m : Machine( temperature > 85 && temperature <= 90, status == MachineStatus.NORMAL )
+then
+    $m.setStatus(MachineStatus.RISKY);
+    $m.addRecommendation("Proveri hlađenje – temperatura iznad praga za normalni režim.");
+    update($m);
+    System.out.println("Rule fired: Temperature > 85°C (Risky), " + $m.getName());
+end
+
+// --- Critical temperature under high load ---
+rule "Temperature > 90°C (Critical)"
+when
+    $m : Machine( temperature > 90, status != MachineStatus.CRITICAL )
+then
+    $m.setStatus(MachineStatus.CRITICAL);
+    $m.addRecommendation("Kritično pregrevanje pri visokom opterećenju – razmotri gašenje mašine!");
+    // shutdownMachine($m);
+    update($m);
+    System.out.println("Rule fired: Critical overheat (Critical), " + $m.getName());
+end

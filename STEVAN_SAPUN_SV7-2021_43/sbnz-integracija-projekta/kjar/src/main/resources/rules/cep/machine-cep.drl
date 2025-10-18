@@ -18,55 +18,157 @@ import com.ftn.sbnz.model.enums.MachineStatus
 //    @timestamp(timestamp)
 //end
 
-// Rule 1: Temperature spikes in 1 min
-rule "High temperature 1 minute window"
+//// Rule 1: Temperature spikes in 1 min
+//rule "High temperature 1 minute window"
+//no-loop true
+//when
+//    $m : Machine( status != MachineStatus.CRITICAL )
+//    accumulate(
+//        $t : TemperatureReading(machineId == $m.id, value > 100) over window:time(1m),
+//        $count : count($t)
+//    )
+//    eval($count >= 3)
+//then
+//    if ($m.getStatus() != MachineStatus.CRITICAL) {
+//        $m.setStatus(MachineStatus.CRITICAL);
+//        $m.addRecommendation("Ponovljeno pregrevanje u poslednjem minutu – proveri sistem hlađenja i protok ulja.");
+//        update($m);
+//        System.out.println("Machine escalated to CRITICAL: " + $m.getName());
+//    }
+//end
+//
+//// Rule 2: Vibration spikes in 5 minutes
+//rule "High vibration 5 minute window"
+//no-loop true
+//when
+//    $m : Machine( status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS) )
+//    accumulate(
+//        $v : VibrationReading(machineId == $m.id, value > 10) over window:time(5m),
+//        $count : count($v)
+//    )
+//    eval($count >= 3)
+//then
+//    if ($m.getStatus() == MachineStatus.NORMAL || $m.getStatus() == MachineStatus.SUSPICIOUS) {
+//        $m.setStatus(MachineStatus.RISKY);
+//        $m.addRecommendation("Učestale vibracije u poslednjih 5 minuta – proveri balans rotora i stanje ležajeva.");
+//        update($m);
+//        System.out.println("Machine escalated to RISKY: " + $m.getName());
+//    }
+//end
+//
+//// Rule 3: Combined vibration + temperature anomaly in 10 minutes
+//rule "Vibration + Temperature anomaly 10 minutes"
+//no-loop true
+//when
+//    $m : Machine( status != MachineStatus.CRITICAL )
+//    $vCount : Number() from accumulate(
+//        $v : VibrationReading(machineId == $m.id, value > 7.1) over window:time(10m),
+//        count($v)
+//    )
+//    $tCount : Number() from accumulate(
+//        $t : TemperatureReading(machineId == $m.id, value > 85) over window:time(10m),
+//        count($t)
+//    )
+//    eval($vCount >= 1 && $tCount >= 1)
+//then
+//    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
+//        $m.setStatus(MachineStatus.RISKY);
+//        $m.addRecommendation("Kombinacija povišene temperature i vibracija u poslednjih 10 minuta – mogući problem sa ležajevima ili podmazivanjem.");
+//        update($m);
+//        System.out.println("Machine escalated to RISKY (combined anomaly): " + $m.getName());
+//    }
+//end
+
+
+
+// -- RULES FROM SPECIFICATION ----------------------------------------------
+import com.ftn.sbnz.model.events.CurrentReading
+
+// --- Rapid vibration increase (relative change) ---
+rule "Vibration jump 20% in 1 minute"
 no-loop true
 when
-    $m : Machine( status != MachineStatus.CRITICAL )
-    accumulate(
-        $t : TemperatureReading(machineId == $m.id, value > 100) over window:time(1m),
-        $count : count($t)
-    )
-    eval($count >= 3)
+    $m : Machine($id : id, status in (MachineStatus.NORMAL))
+    $v1 : VibrationReading(machineId == $id) over window:time(1m)
+    $v2 : VibrationReading(machineId == $id, this after[0s,1m] $v1) over window:time(1m)
+    eval(($v2.value - $v1.value) / $v1.value > 0.2)
 then
-    if ($m.getStatus() != MachineStatus.CRITICAL) {
-        $m.setStatus(MachineStatus.CRITICAL);
-        $m.addRecommendation("Ponovljeno pregrevanje u poslednjem minutu – proveri sistem hlađenja i protok ulja.");
+    if ($m.getStatus() == MachineStatus.NORMAL) {
+        $m.setStatus(MachineStatus.SUSPICIOUS);
+        $m.addRecommendation("Nagla promena vibracija – proveri rotor i pričvršćenja.");
         update($m);
-        System.out.println("Machine escalated to CRITICAL: " + $m.getName());
+        System.out.println("CEP Rule fired: Rapid vibration increase for " + $m.getName());
     }
 end
 
-// Rule 2: Vibration spikes in 5 minutes
-rule "High vibration 5 minute window"
+// --- Prolonged high vibration (5 min spike) ---
+rule "High vibration sustained 5 min"
 no-loop true
 when
-    $m : Machine( status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS) )
+    $m : Machine($id : id, status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS))
     accumulate(
-        $v : VibrationReading(machineId == $m.id, value > 10) over window:time(5m),
+        $v : VibrationReading(machineId == $id, value > 10) over window:time(5m),
         $count : count($v)
     )
     eval($count >= 3)
 then
     if ($m.getStatus() == MachineStatus.NORMAL || $m.getStatus() == MachineStatus.SUSPICIOUS) {
         $m.setStatus(MachineStatus.RISKY);
-        $m.addRecommendation("Učestale vibracije u poslednjih 5 minuta – proveri balans rotora i stanje ležajeva.");
+        $m.addRecommendation("Učestale vibracije u poslednjih 5 minuta – proveri balans i stanje ležajeva.");
         update($m);
-        System.out.println("Machine escalated to RISKY: " + $m.getName());
+        System.out.println("CEP Rule fired: Sustained high vibration for " + $m.getName());
     }
 end
 
-// Rule 3: Combined vibration + temperature anomaly in 10 minutes
+// --- Prolonged heating (30 min > 80°C) ---
+rule "Temperature > 80°C for 30 minutes"
+no-loop true
+when
+    $m : Machine($id : id, status != MachineStatus.CRITICAL)
+    accumulate(
+        $t : TemperatureReading(machineId == $id, value > 80) over window:time(30m),
+        $count : count($t)
+    )
+    eval($count >= 3)
+then
+    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
+        $m.setStatus(MachineStatus.RISKY);
+        $m.addRecommendation("Temperatura visoka više od 30 min – moguće habanje ležaja.");
+        update($m);
+        System.out.println("CEP Rule fired: Prolonged heating for " + $m.getName());
+    }
+end
+
+// --- Prolonged high current (15 min > 100% rated) ---
+rule "Current > 100% for 15 minutes"
+no-loop true
+when
+    $m : Machine($id : id, status != MachineStatus.CRITICAL)
+    accumulate(
+        $c : CurrentReading(machineId == $id, value > 100) over window:time(15m),
+        $count : count($c)
+    )
+    eval($count >= 3)
+then
+    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
+        $m.setStatus(MachineStatus.RISKY);
+        $m.addRecommendation("Preopterećenje duže vreme – smanji struju.");
+        update($m);
+        System.out.println("CEP Rule fired: Prolonged high current for " + $m.getName());
+    }
+end
+
+// --- Combined vibration + temperature anomaly in 10 minutes ---
 rule "Vibration + Temperature anomaly 10 minutes"
 no-loop true
 when
-    $m : Machine( status != MachineStatus.CRITICAL )
+    $m : Machine($id : id, status not in (MachineStatus.CRITICAL, MachineStatus.RISKY))
     $vCount : Number() from accumulate(
-        $v : VibrationReading(machineId == $m.id, value > 7.1) over window:time(10m),
+        $v : VibrationReading(machineId == $id, value > 7.1) over window:time(10m),
         count($v)
     )
     $tCount : Number() from accumulate(
-        $t : TemperatureReading(machineId == $m.id, value > 85) over window:time(10m),
+        $t : TemperatureReading(machineId == $id, value > 85) over window:time(10m),
         count($t)
     )
     eval($vCount >= 1 && $tCount >= 1)
@@ -75,7 +177,88 @@ then
         $m.setStatus(MachineStatus.RISKY);
         $m.addRecommendation("Kombinacija povišene temperature i vibracija u poslednjih 10 minuta – mogući problem sa ležajevima ili podmazivanjem.");
         update($m);
-        System.out.println("Machine escalated to RISKY (combined anomaly): " + $m.getName());
+        System.out.println("CEP Rule fired: Combined vibration + temperature anomaly for " + $m.getName());
     }
 end
 
+// IMPLEMENT LATER
+//// --- Frequent overloads (5+ in last 7 days) ---
+//rule "Frequent overloads in 7 days"
+//no-loop true
+//when
+//    $m : Machine($id : id)
+//    accumulate(
+//        $c : CurrentReading(machineId == $id, overloadOccurred == true) over window:time(7d),
+//        $count : count($c)
+//    )
+//    eval($count >= 5)
+//then
+//    System.out.println("Machine " + $m.getName() + " had frequent overloads – schedule inspection!");
+//end
+
+
+
+
+
+// -- CONTEXT RULES -------------------------------------------------
+import com.ftn.sbnz.model.events.ContextReading
+
+
+// --- Context: PostMaintenance + Temperature anomaly ---
+rule "Post-maintenance temperature rise"
+no-loop true
+when
+    $m : Machine($id : id)
+    ContextReading(machineId == $id, context == "PostMaintenance") over window:time(1h)
+    accumulate(
+        $t : TemperatureReading(machineId == $id, value > 80) over window:time(30m),
+        $count : count($t)
+    )
+    eval($count >= 3)
+then
+    $m.addRecommendation("Temperatura raste nakon servisa – moguće loša popravka, zakaži inspekciju.");
+    update($m);
+    System.out.println("CEP Context Rule fired: Post-maintenance heating for " + $m.getName());
+end
+
+
+// --- Context: HighLoad + High vibration ---
+rule "High load vibration anomaly"
+no-loop true
+when
+    $m : Machine($id : id, status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS))
+    ContextReading(machineId == $id, context == "HighLoad") over window:time(10m)
+    accumulate(
+        $v : VibrationReading(machineId == $id, value > 8.0) over window:time(5m),
+        $count : count($v)
+    )
+    eval($count >= 3)
+then
+    if ($m.getStatus() == MachineStatus.NORMAL || $m.getStatus() == MachineStatus.SUSPICIOUS) {
+        $m.setStatus(MachineStatus.SUSPICIOUS);
+        $m.addRecommendation("Visoke vibracije pri velikom opterećenju – proveri balans rotora.");
+        update($m);
+        System.out.println("CEP Context Rule fired: High vibration under load for " + $m.getName());
+    }
+end
+
+
+// --- Context: Idle + Elevated temperature ---
+rule "Idle machine with high temperature"
+no-loop true
+when
+    $m : Machine($id : id, status != MachineStatus.CRITICAL)
+    ContextReading(machineId == $id, context == "Idle") over window:time(30m)
+    accumulate(
+        $t : TemperatureReading(machineId == $id, value > 60) over window:time(10m),
+        $count : count($t)
+    )
+    eval($count >= 2)
+then
+    if ($m.getStatus() != MachineStatus.RISKY && $m.getStatus() != MachineStatus.CRITICAL) {
+        $m.setStatus(MachineStatus.RISKY);
+        $m.addRecommendation("Visoka temperatura u stanju mirovanja – proveri ventilaciju ili hlađenje.");
+        update($m);
+        System.out.println("CEP Context Rule fired: Idle overheating for " + $m.getName());
+    }
+end
