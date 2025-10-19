@@ -6,6 +6,7 @@ import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.kie.api.KieServices;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SpringBootApplication
+@EntityScan(basePackages = "com.ftn.sbnz.model.models") // <-- ADD THIS LINE
 public class ServiceApplication implements CommandLineRunner {
 
 	private static Logger log = LoggerFactory.getLogger(ServiceApplication.class);

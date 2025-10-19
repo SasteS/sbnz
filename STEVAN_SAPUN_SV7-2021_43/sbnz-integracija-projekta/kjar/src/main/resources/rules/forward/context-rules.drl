@@ -1,17 +1,21 @@
 package rules.forward
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
+import com.ftn.sbnz.model.enums.OperationContext
 
 rule "PostMaintenance - rising temperature"
+no-loop true
 when
     $m : Machine( context == "PostMaintenance", temperature > 80 )
 then
+    $m.setStatus(MachineStatus.SUSPICIOUS);
     System.out.println("Temperatura raste posle servisa za " + $m.getName());
     $m.addRecommendation("Temperatura raste posle servisa – proveri servisni zahvat.");
     update($m);
 end
 
 rule "HighLoad - increased vibration"
+no-loop true
 when
     $m : Machine( context == "HighLoad", vibration > 9 )
 then
@@ -21,10 +25,23 @@ then
 end
 
 rule "Idle - abnormal temperature"
+no-loop true
 when
     $m : Machine( context == "Idle", temperature > 60 )
 then
     $m.setStatus(MachineStatus.RISKY);
     $m.addRecommendation("Temperatura previsoka u praznom hodu – proveri ventilaciju.");
     update($m);
+end
+
+// --- If vibration normalizes ---
+rule "Normal vibration range - post maintenance"
+no-loop true
+when
+    $m : Machine( context == OperationContext.POST_MAINTENANCE, vibration <= 7, temperature <= 80, currentPercentOfRated <= 100 , status != MachineStatus.NORMAL )
+then
+    $m.setStatus(MachineStatus.NORMAL);
+    $m.resetRecommendations();
+    update($m);
+    System.out.println("Rule fired: PostMaintenance normalization → " + $m.getName());
 end

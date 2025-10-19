@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Adjust Machine Parameters</h2>
+
+<mat-dialog-content>
+  <mat-form-field>
+    <mat-label>Temperature</mat-label>
+    <input matInput type="number" [(ngModel)]="data.temperature" />
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Vibration</mat-label>
+    <input matInput type="number" [(ngModel)]="data.vibration" />
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Current %</mat-label>
+    <input matInput type="number" [(ngModel)]="data.currentPercentOfRated" />
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Overload Trips</mat-label>
+    <input matInput type="number" [(ngModel)]="data.overloadTripCount" />
+  </mat-form-field>
+  
+  <mat-form-field>
+    <mat-label>Operation Context</mat-label>
+    <mat-select [(ngModel)]="data.context">
+      <mat-option *ngFor="let context of contexts" [value]="context">
+        {{ context }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-flat-button color="primary" (click)="onRun()">Run Forward Rules</button>
+</mat-dialog-actions>

@@ -4,8 +4,9 @@ import com.ftn.sbnz.model.enums.MachineStatus
 
 // --- Moderate overheat ---
 rule "Temperature > 85°C (Risky)"
+no-loop true
 when
-    $m : Machine( temperature > 85 && temperature <= 90, status == MachineStatus.NORMAL )
+    $m : Machine( temperature > 85 && temperature <= 90, status not in ( MachineStatus.RISKY, MachineStatus.CRITICAL) )
 then
     $m.setStatus(MachineStatus.RISKY);
     $m.addRecommendation("Proveri hlađenje – temperatura iznad praga za normalni režim.");
@@ -15,6 +16,7 @@ end
 
 // --- Critical temperature under high load ---
 rule "Temperature > 90°C (Critical)"
+no-loop true
 when
     $m : Machine( temperature > 90, status != MachineStatus.CRITICAL )
 then

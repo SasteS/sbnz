@@ -3,6 +3,7 @@ import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
 
 rule "Current > 120% and overloadOccurred"
+no-loop true
 when
     $m : Machine( currentPercentOfRated > 120 )
 then

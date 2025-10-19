@@ -1,0 +1,33 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Machine } from '../models/Machine';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MachineService {
+  private apiUrl = 'http://localhost:8080/api';
+
+  constructor(private http: HttpClient) {}
+
+  // MACHINE CALLS
+  getAll(): Observable<Machine[]> {
+    return this.http.get<Machine[]>(`${this.apiUrl}/machines/all`);
+  }
+
+  create(name: string): Observable<Machine> {
+    return this.http.post<Machine>(`${this.apiUrl}/machines/create?name=${name}`, {});
+  }
+
+  // FORWARD
+  runForwardRules(machine: Machine): Observable<Machine> {
+    return this.http.post<Machine>(`${this.apiUrl}/forward/run`, machine);
+  }
+
+  runForwardBatch(machines: Machine[]): Observable<Machine[]> {
+    return this.http.post<Machine[]>('http://localhost:8080/api/forward/run-batch', machines);
+  }
+
+
+}

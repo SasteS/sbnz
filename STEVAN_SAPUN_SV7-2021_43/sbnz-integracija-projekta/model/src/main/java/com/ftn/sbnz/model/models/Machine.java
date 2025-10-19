@@ -2,32 +2,47 @@ package com.ftn.sbnz.model.models;
 
 import com.ftn.sbnz.model.enums.MachineStatus;
 import com.ftn.sbnz.model.enums.OperationContext;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.persistence.*;
 
-// Aggregated machine state. This is the primary Drools fact in most rules.
+@Entity
+@Table(name = "machines")
 public class Machine implements Serializable {
+
+    @Id
+    @GeneratedValue(generator = "uuid") // Reference the generator name
+    @GenericGenerator(
+            name = "uuid",
+            // This is the Hibernate strategy for String-based UUIDs
+            strategy = "uuid2"
+    )
     private String id;
+
+    @Column(nullable = false, unique = true)
     private String name;
 
-    // sensor aggregated values (simple representation)
-    private double vibration;     // e.g. RMS mm/s
-    private double temperature;   // °C
-    private double currentPercentOfRated; // % of rated current, e.g. 110.0
+    private double vibration;
+    private double temperature;
+    private double currentPercentOfRated;
     private double rpm;
 
+    @Enumerated(EnumType.STRING)
     private MachineStatus status = MachineStatus.NORMAL;
+
+    @Enumerated(EnumType.STRING)
     private OperationContext context = OperationContext.NORMAL;
 
     private Instant lastUpdated;
     private int overloadTripCount = 0;
 
-    // recommendations / actions produced by rules
-    private final List<String> recommendations = new ArrayList<>();
+    @ElementCollection
+    private List<String> recommendations = new ArrayList<>();
 
     public Machine() {}
 
@@ -35,6 +50,20 @@ public class Machine implements Serializable {
         this.id = id;
         this.name = name;
         this.lastUpdated = Instant.now();
+    }
+
+    public Machine(String id, String name, double vibration, double temperature, double currentPercentOfRated, double rpm, MachineStatus status, OperationContext context, Instant lastUpdated, int overloadTripCount) {
+        this.id = id;
+        this.name = name;
+        this.vibration = vibration;
+        this.temperature = temperature;
+        this.currentPercentOfRated = currentPercentOfRated;
+        this.rpm = rpm;
+        this.status = status;
+        this.context = context;
+        this.lastUpdated = lastUpdated;
+        this.overloadTripCount = overloadTripCount;
+        this.recommendations = new ArrayList<>();
     }
 
     // --- getters / setters ---
@@ -83,6 +112,8 @@ public class Machine implements Serializable {
 
     public List<String> getRecommendations() { return recommendations; }
     public void addRecommendation(String rec) { this.recommendations.add(rec); }
+    public void resetRecommendations() { recommendations.clear(); }
+
 
     // convenience helpers
     public boolean isCritical() { return this.status == MachineStatus.CRITICAL; }

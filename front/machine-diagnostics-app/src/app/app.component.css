@@ -1,0 +1,32 @@
+.navbar {
+  background-color: #1e1e2f;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.nav-container {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-container a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-container a:hover {
+  color: #00c4ff;
+}
+
+.nav-container a.active {
+  border-bottom: 2px solid #00c4ff;
+}
+
+.content {
+  padding: 20px;
+}

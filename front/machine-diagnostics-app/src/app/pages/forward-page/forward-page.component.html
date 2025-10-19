@@ -1,0 +1,36 @@
+<div class="container">
+  <h2>Forward Chaining - Run Rules</h2>
+
+  <div class="actions mb-3">
+    <button class="btn btn-success" (click)="runBatch()">Run Forward Rules on All</button>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Temperature</th>
+        <th>Vibration</th>
+        <th>Rated Current (%)</th>
+        <th>Overload Trips</th>
+        <th>Recommendations</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of machines">
+        <td>{{ m.name }}</td>
+        <td>{{ m.status }}</td>
+        <td>{{ m.temperature | number:'1.0-2' }}</td>
+        <td>{{ m.vibration | number:'1.0-2' }}</td>
+        <td>{{ m.currentPercentOfRated | number:'1.0-2' }}</td>
+        <td>{{ m.overloadTripCount }}</td>
+        <td>{{ m.recommendations.join(', ') }}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" (click)="openDialog(m)">Run Forward</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

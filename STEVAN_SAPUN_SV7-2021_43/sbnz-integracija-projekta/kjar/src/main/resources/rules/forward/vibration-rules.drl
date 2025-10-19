@@ -4,6 +4,7 @@ import com.ftn.sbnz.model.enums.MachineStatus
 
 // --- Vibration above normal threshold ---
 rule "Vibration slightly high (Suspicious)"
+no-loop true
 when
     $m : Machine( vibration > 7.1 && vibration <= 10, status == MachineStatus.NORMAL )
 then
@@ -15,6 +16,7 @@ end
 
 // --- Very high vibration ---
 rule "Vibration very high (Risky)"
+no-loop true
 when
     $m : Machine( vibration > 10, status != MachineStatus.CRITICAL )
 then

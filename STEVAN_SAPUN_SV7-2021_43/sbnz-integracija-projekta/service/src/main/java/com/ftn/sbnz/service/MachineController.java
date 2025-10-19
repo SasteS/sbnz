@@ -3,13 +3,13 @@ package com.ftn.sbnz.service;
 import com.ftn.sbnz.model.enums.MachineStatus;
 import com.ftn.sbnz.model.models.Machine;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
-@RequestMapping("/machine")
+@RequestMapping("/api/machines")
+@CrossOrigin(origins = "http://localhost:4200")
 public class MachineController {
 
     private final MachineService machineService;
@@ -19,23 +19,14 @@ public class MachineController {
         this.machineService = machineService;
     }
 
-    @GetMapping(produces = "application/json")
-    public Machine evaluateMachine(
-            @RequestParam String id,
-            @RequestParam String name,
-            @RequestParam double vibration,
-            @RequestParam double temperature,
-            @RequestParam double current) {
+    @PostMapping("/create")
+    public ResponseEntity<Machine> createMachine(@RequestParam String name) {
+        Machine saved = machineService.create(name);
+        return ResponseEntity.ok(saved);
+    }
 
-        Machine machine = new Machine();
-        machine.setId(id);
-        machine.setName(name);
-        machine.setVibration(vibration);
-        machine.setTemperature(temperature);
-        machine.setCurrentPercentOfRated(current);
-        machine.setStatus(MachineStatus.NORMAL);
-
-        Machine evaluated = machineService.evaluate(machine);
-        return evaluated;
+    @GetMapping("/all")
+    public ResponseEntity<List<Machine>> getAllMachines() {
+        return ResponseEntity.ok(machineService.findAll());
     }
 }
