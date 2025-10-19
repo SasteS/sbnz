@@ -1,159 +1,69 @@
 //package rules.backward
-//
-//import com.ftn.sbnz.model.models.Machine
+//import com.ftn.sbnz.model.models.Machine;
 //import java.util.Arrays;
+//import java.util.List; // Dodata List za eksplicitniju deklaraciju
+//import com.ftn.sbnz.model.models.DroolsLog
 //
-//dialect "mvel"
 //
-//// --- Logical dependency structure ---
+//dialect "java"
+//
 //declare HypothesisDependency
 //    conclusion : String
 //    prerequisites : java.util.List
 //end
 //
-//// --- Logical proof result ---
-//declare ProvenHypothesis
-//    name : String
-//end
-//
-//// --- Initialize tree (just two levels) ---
+//// Pravilo za inicijalizaciju
 //rule "Init dependencies"
 //    salience 100
 //when
 //    not( HypothesisDependency(conclusion == "CriticalMachine") )
 //then
-//    System.out.println("Initializing backward chain tree...");
+//    System.out.println("Initializing dependency tree...");
 //    insert(new HypothesisDependency("CriticalMachine", Arrays.asList("Overheating")));
 //    insert(new HypothesisDependency("Overheating", Arrays.asList("HighTemperature")));
 //end
 //
-//// --- Query for recursive reasoning ---
-//query proveHypothesis(String $hypothesis)
-//    (// Base case
-//        ( eval( $hypothesis == "HighTemperature" ) and exists( Machine(temperature > 90) ) )
-//    )
-//    or
-//// Recursive case
-//    (
-//        $z: HypothesisDependency(conclusion == $hypothesis)
-//        not (
-//            String($p: this) from $z.prerequisites
-//            not proveHypothesis($p)
-//        )
-//    )
-//end
-//
-//// --- Final rule: fire once top hypothesis proven ---
-//rule "Confirm critical machine"
+//// Pravilo za logovanje (pomoćno)
+//rule "Log dependency"
+//salience 50
 //when
-//    proveHypothesis("CriticalMachine";)
+//    $dep : HypothesisDependency($c : conclusion, $pre : prerequisites)
 //then
-//    System.out.println("Backward chain success: Machine proven CRITICAL.");
-//end
-
-
-
-
-
-
-
-
-//
-//package rules.backward
-//import com.ftn.sbnz.model.models.Machine
-//
-//dialect "mvel"
-//
-//declare HypothesisDependency
-//    conclusion : String
-//    prerequisites : java.util.List
+//    System.out.println("Dependency: " + $c + " -> " + $pre);
 //end
 //
-//query proveHypothesis($hypothesis)
+//// Glavni Upit za Dokazivanje Unazad
+//query proveHypothesis( String $hypothesis )
 //    // Base case
-//    ( eval($hypothesis == "HighTemperature") and exists( Machine(temperature > 90) ) )
+//    (
+//        eval( DroolsLog.log("Base case check for: " + $hypothesis) )
+//        and eval( $hypothesis.equals("HighTemperature") )
+//        and exists( Machine( temperature > 90 ) )
+//        and eval( DroolsLog.log("Base proven: " + $hypothesis) )
+//    )
 //    or
 //    // Recursive case
-//    ( HypothesisDependency($hypothesis, $pre;)
-//      and not( Unproven($hypothesis;) ) )
+//    (
+//        eval( DroolsLog.log("Recursive case check for: " + $hypothesis) )
+//        and $z : HypothesisDependency(conclusion == $hypothesis, $pre : prerequisites)
+//        and eval( DroolsLog.log("→ Dependencies for " + $hypothesis + ": " + $pre) )
+//        and not (
+//            String($p : this) from $pre
+//            and eval( DroolsLog.log("  ↪ Trying to prove prerequisite: " + $p) )
+//            and not proveHypothesis($p;)
+//        )
+//        and eval( DroolsLog.log("Recursive proven: " + $hypothesis) )
+//    )
 //end
 //
-//query Unproven($hypothesis)
-//    HypothesisDependency($hypothesis, $pre;)
-//    String($p : this) from $pre
-//    not( proveHypothesis($p;) )
+// // Pravilo za potvrdu kvara (aktivira se kada je koren hipoteze dokazan)
+//rule "Confirm critical machine fault"
+//    no-loop true
+//    salience 10 // Niži salience da se pokrene tek nakon inicijalizacije
+//when
+//    proveHypothesis("CriticalMachine";) // Pozovi upit za koren hipotezu
+//then
+//    System.out.println("Potvrđen kvar: Critical Machine (rekurzivno dokazano)!");
+//    // Ovde možete da insertujete ConfirmedFault, ako imate taj model
+//    // insertLogical(new ConfirmedFault("CriticalMachineFault", 1.0));
 //end
-//
-//
-
-
-
-package rules.backward
-import com.ftn.sbnz.model.models.Machine;
-import java.util.Arrays;
-import java.util.List; // Dodata List za eksplicitniju deklaraciju
-import com.ftn.sbnz.model.models.DroolsLog
-
-
-dialect "java"
-
-declare HypothesisDependency
-    conclusion : String
-    prerequisites : java.util.List
-end
-
-// Pravilo za inicijalizaciju
-rule "Init dependencies"
-    salience 100
-when
-    not( HypothesisDependency(conclusion == "CriticalMachine") )
-then
-    System.out.println("Initializing dependency tree...");
-    insert(new HypothesisDependency("CriticalMachine", Arrays.asList("Overheating")));
-    insert(new HypothesisDependency("Overheating", Arrays.asList("HighTemperature")));
-end
-
-// Pravilo za logovanje (pomoćno)
-rule "Log dependency"
-salience 50
-when
-    $dep : HypothesisDependency($c : conclusion, $pre : prerequisites)
-then
-    System.out.println("Dependency: " + $c + " -> " + $pre);
-end
-
-// Glavni Upit za Dokazivanje Unazad
-query proveHypothesis( String $hypothesis )
-    // Base case
-    (
-        eval( DroolsLog.log("Base case check for: " + $hypothesis) )
-        and eval( $hypothesis.equals("HighTemperature") )
-        and exists( Machine( temperature > 90 ) )
-        and eval( DroolsLog.log("✅ Base proven: " + $hypothesis) )
-    )
-    or
-    // Recursive case
-    (
-        eval( DroolsLog.log("Recursive case check for: " + $hypothesis) )
-        and $z : HypothesisDependency(conclusion == $hypothesis, $pre : prerequisites)
-        and eval( DroolsLog.log("→ Dependencies for " + $hypothesis + ": " + $pre) )
-        and not (
-            String($p : this) from $pre
-            and eval( DroolsLog.log("  ↪ Trying to prove prerequisite: " + $p) )
-            and not proveHypothesis($p;)
-        )
-        and eval( DroolsLog.log("✅ Recursive proven: " + $hypothesis) )
-    )
-end
-
- // Pravilo za potvrdu kvara (aktivira se kada je koren hipoteze dokazan)
-rule "Confirm critical machine fault"
-    no-loop true
-    salience 10 // Niži salience da se pokrene tek nakon inicijalizacije
-when
-    proveHypothesis("CriticalMachine";) // Pozovi upit za koren hipotezu
-then
-    System.out.println("Potvrđen kvar: Critical Machine (rekurzivno dokazano)!");
-    // Ovde možete da insertujete ConfirmedFault, ako imate taj model
-    // insertLogical(new ConfirmedFault("CriticalMachineFault", 1.0));
-end

@@ -47,5 +47,5 @@
 //when
 //    proveHypothesis("CriticalMachine";)
 //then
-//    System.out.println("✅ TRUE BACKWARD CHAINING: CriticalMachine hypothesis proven!");
+//    System.out.println("TRUE BACKWARD CHAINING: CriticalMachine hypothesis proven!");
 //end
