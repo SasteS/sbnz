@@ -1,0 +1,95 @@
+container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #2c3e50; /* Dark Gray/Blue Primary Color */
+    margin-bottom: 25px;
+    border-bottom: 3px solid #3498db; /* Bright Blue Accent */
+    padding-bottom: 10px;
+}
+
+/* --- Create Machine Button Styling (Emerald Green) --- */
+button[mat-raised-button] {
+    background-color: #27ae60 !important;
+    border-color: #27ae60 !important;
+    color: white;
+    font-weight: 600;
+    padding: 10px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+button[mat-raised-button]:hover {
+    background-color: #1e8449 !important;
+    border-color: #1e8449 !important;
+    box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
+    transform: translateY(-1px);
+}
+
+/* --- Table Styling (Card Look) --- */
+.mat-elevation-z8 {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(44, 62, 80, 0.1); /* Subtle shadow matching primary color */
+    background-color: #ffffff;
+    margin-top: 20px;
+}
+
+/* Table Header */
+table.mat-table thead {
+    background-color: #ecf0f1; /* Light gray header */
+}
+
+table.mat-table th.mat-header-cell {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 15px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    border-bottom: 2px solid #bdc3c7;
+    text-align: left;
+}
+
+/* Table Rows (Card Effect) */
+table.mat-table tr.mat-row {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+table.mat-table tr.mat-row:hover {
+    background-color: #eaf6ff; /* Light blue hover (consistent with Forward) */
+    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.1);
+    transform: translateY(-1px);
+    cursor: default;
+}
+
+/* Table Cells */
+table.mat-table td.mat-cell {
+    padding: 15px 20px;
+    font-size: 0.95rem;
+    color: #34495e;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Status Badges */
+.status-NORMAL {
+    color: #27ae60; /* Emerald Green */
+    font-weight: 600;
+}
+.status-ERROR {
+    color: #e74c3c; /* Red */
+    font-weight: 600;
+}
+.status-WARNING {
+    color: #f1c40f; /* Yellow/Amber */
+    font-weight: 600;
+}

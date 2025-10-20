@@ -1,0 +1,152 @@
+/* --- UNIVERSAL STYLES (Backward Chaining Page - Consistent Blue/Green Theme) --- */
+.container {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50; /* Dark Gray/Blue Primary Color (Consistent) */
+    margin-bottom: 25px;
+    border-bottom: 3px solid #3498db; /* Bright Blue Accent (Consistent) */
+    padding-bottom: 10px;
+}
+
+h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50; /* Dark Gray/Blue Primary Color (Consistent) */
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+/* --- Action Button Styling --- */
+.btn-outline-primary {
+    /* Style for the 'Diagnose (Backward)' button - Bright Blue Outline (Consistent) */
+    color: #3498db;
+    border-color: #3498db;
+    background-color: transparent;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    color: white;
+    background-color: #3498db;
+    border-color: #3498db;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+    transform: translateY(-1px);
+}
+
+/* --- MACHINE TABLE (Card Look - Consistent) --- */
+
+.table-hover {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Consistent with Forward/Template */
+    background-color: #ffffff;
+}
+
+.table-hover thead {
+    background-color: #ecf0f1; /* Light gray header (Consistent) */
+}
+
+.table-hover th {
+    color: #2c3e50; /* Dark text for headers (Consistent) */
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 15px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    border-bottom: 2px solid #bdc3c7; /* Consistent subtle border */
+    text-align: left;
+}
+
+.table-hover tbody tr {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table-hover tbody tr:nth-child(odd) {
+    background-color: #f9f9f9; /* Retaining striped pattern */
+}
+
+.table-hover tbody tr:hover {
+    background-color: #eaf6ff; /* Subtle light blue row highlight (Consistent) */
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1); /* Subtle blue shadow on hover */
+    transform: translateY(-1px); /* Slight lift */
+}
+
+.table-hover td {
+    padding: 15px 20px;
+    font-size: 0.95rem;
+    color: #34495e; /* Consistent body text color */
+    border-top: none;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+
+/* --- RESULTS SECTION (Consistent Card Look) --- */
+
+.table-bordered {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Consistent shadow */
+    border: 1px solid #bdc3c7; /* Light gray border */
+}
+
+.table-bordered .table-light {
+    background-color: #ecf0f1; /* Light gray header for results (Consistent) */
+}
+
+.table-bordered th {
+    color: #2c3e50; /* Dark Gray/Blue text for results header (Consistent) */
+    font-weight: 700;
+    padding: 15px 20px;
+    border: none !important;
+}
+
+.table-bordered td {
+    padding: 15px 20px;
+    vertical-align: middle;
+    color: #34495e;
+    border-top: none;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Proven/Not Proven badges - Retain clear green/red for status */
+.text-success.fw-bold {
+    background-color: #e6f7ed;
+    color: #28a745 !important;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+.text-danger.fw-bold {
+    background-color: #fcebeb;
+    color: #dc3545 !important;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* --- LOGS SECTION (Code Block - Consistent) --- */
+
+.bg-dark {
+    background-color: #212529 !important; /* Dark gray background for logs */
+    border: 1px solid #3498db; /* Bright Blue border for accent */
+}
+
+pre {
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    padding: 15px;
+    color: #f8f9fa;
+}

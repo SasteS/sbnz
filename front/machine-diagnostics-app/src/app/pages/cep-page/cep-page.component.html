@@ -1,0 +1,41 @@
+<div class="container mt-4">
+  <h2>CEP Event Simulation</h2>
+
+  <table class="table table-hover mt-3" *ngIf="machines.length > 0">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of machines">
+        <td>{{ m.name }}</td>
+        <td>{{ m.status }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary" (click)="runCep(m)">
+            Simulate CEP
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="selectedMachine" class="mt-4">
+    <h4>Simulation Result: {{ selectedMachine.name }}</h4>
+    <p>Status: <b>{{ selectedMachine.status }}</b></p>
+    <p *ngIf="selectedMachine.recommendations?.length">
+      Recommendations:
+      <ul>
+        <li *ngFor="let rec of selectedMachine.recommendations">{{ rec }}</li>
+      </ul>
+  </div>
+
+  <div *ngIf="logs.length > 0" class="mt-4">
+    <h4>CEP Logs</h4>
+    <pre class="bg-dark text-light p-3 rounded" style="max-height:400px;overflow:auto;">
+{{ logs.join('\n') }}
+    </pre>
+  </div>
+</div>

@@ -22,6 +22,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { BackwardPageComponent } from './pages/backward-page/backward-page.component';
 import { BackwardDialogComponent } from './components/backward-dialog/backward-dialog.component';
 import { TemplatePageComponent } from './pages/template-page/template-page.component';
+import { CepPageComponent } from './pages/cep-page/cep-page.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { TemplatePageComponent } from './pages/template-page/template-page.compo
     EditMachineDialogComponent,
     BackwardPageComponent,
     BackwardDialogComponent,
-    TemplatePageComponent
+    TemplatePageComponent,
+    CepPageComponent
   ],
   imports: [
     BrowserModule,

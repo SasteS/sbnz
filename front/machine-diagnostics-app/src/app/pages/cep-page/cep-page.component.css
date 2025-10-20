@@ -1,0 +1,136 @@
+.container {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50; /* Dark Gray/Blue Primary Color (Consistent) */
+    margin-bottom: 25px;
+    border-bottom: 3px solid #3498db; /* Bright Blue Accent (Consistent) */
+    padding-bottom: 10px;
+}
+
+h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50; /* Dark Gray/Blue for section headers */
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+/* --- Action Button Styling (Simulate CEP) --- */
+.btn-outline-primary {
+    /* Style for the 'Simulate CEP' button - Bright Blue Outline (Consistent) */
+    color: #3498db;
+    border-color: #3498db;
+    background-color: transparent;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-outline-primary:hover {
+    color: white;
+    background-color: #3498db;
+    border-color: #3498db;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+    transform: translateY(-1px);
+}
+
+/* --- MACHINE TABLE (Card Look - Consistent) --- */
+
+.table-hover {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    width: 100%;
+}
+
+.table-hover thead {
+    background-color: #ecf0f1; /* Light gray header (Consistent) */
+}
+
+.table-hover th {
+    color: #2c3e50; /* Dark text for headers (Consistent) */
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 15px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    border-bottom: 2px solid #bdc3c7;
+    text-align: left;
+}
+
+.table-hover tbody tr {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.table-hover tbody tr:nth-child(odd) {
+    background-color: #f9f9f9; /* Retaining striped pattern */
+}
+
+.table-hover tbody tr:hover {
+    background-color: #eaf6ff; /* Light blue hover (Consistent) */
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+    transform: translateY(-1px);
+    cursor: default;
+}
+
+.table-hover td {
+    padding: 15px 20px;
+    font-size: 0.95rem;
+    color: #34495e;
+    border-top: none;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+/* --- LOGS SECTION (Code Block - Consistent) --- */
+
+.bg-dark {
+    /* Log container for the <pre> block */
+    background-color: #212529 !important; /* Dark gray background for logs */
+    border: 1px solid #3498db; /* Bright Blue border for accent */
+    border-radius: 12px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.bg-dark.text-light pre {
+    /* Resetting the text color and background inside the pre tag */
+    background: transparent !important;
+    color: #f8f9fa !important;
+    border: none;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    padding: 0;
+    margin: 0;
+    white-space: pre-wrap; /* Ensure long lines wrap */
+    word-break: break-all;
+}
+
+/* Specific styling for the Simulation Results section for readability */
+.mt-4 h4 {
+    border-bottom: 2px solid #bdc3c7;
+    padding-bottom: 5px;
+}
+
+.mt-4 ul {
+    list-style-type: none;
+    padding-left: 15px;
+}
+
+.mt-4 li {
+    background-color: #ecf0f1; /* Light background for list items */
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #34495e;
+}

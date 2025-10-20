@@ -48,4 +48,10 @@ export class MachineService {
     return this.http.post<any>(`${this.apiUrl}/template/diagnose-machine`, machine);
   }
 
+  // CEP
+  runCepOnMachine(machineId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/cep/run-on-machine/${machineId}`, {});
+  }
+
+
 }

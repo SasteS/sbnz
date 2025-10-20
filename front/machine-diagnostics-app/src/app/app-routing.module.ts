@@ -4,6 +4,7 @@ import { MachinesPageComponent } from './pages/machines-page/machines-page.compo
 import { ForwardPageComponent } from './pages/forward-page/forward-page.component';
 import { BackwardPageComponent } from './pages/backward-page/backward-page.component';
 import { TemplatePageComponent } from './pages/template-page/template-page.component';
+import { CepPageComponent } from './pages/cep-page/cep-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/machines', pathMatch: 'full' },
@@ -11,7 +12,7 @@ const routes: Routes = [
   
   { path: 'forward', component: ForwardPageComponent },
   { path: 'backward', component: BackwardPageComponent },
-  { path: 'cep', component: MachinesPageComponent },
+  { path: 'cep', component: CepPageComponent },
   { path: 'template', component: TemplatePageComponent }
 ];
 

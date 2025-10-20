@@ -1,0 +1,157 @@
+/* --- UNIVERSAL STYLES (Dynamic Template Diagnostics Page - Consistent Theme) --- */
+.container {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50; /* Dark Gray/Blue Primary Color */
+    margin-bottom: 25px;
+    border-bottom: 3px solid #3498db; /* Bright Blue Accent */
+    padding-bottom: 10px;
+}
+
+/* --- Action Button Styling --- */
+.actions {
+    margin-bottom: 30px;
+}
+
+.btn-success {
+    /* Emerald Green for 'Generate & Compile Rules' button (Primary Action) */
+    background-color: #27ae60;
+    border-color: #27ae60;
+    color: white;
+    font-weight: 600;
+    padding: 10px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-success:hover {
+    background-color: #1e8449;
+    border-color: #1e8449;
+    box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-warning.btn-sm {
+    /* Amber/Orange for the individual 'Fire Template Rules' button (Secondary/Warning Action) */
+    border-color: #3498db;
+    color: #3498db;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 6px 14px;
+    box-shadow: 0 2px 5px rgba(243, 156, 18, 0.2);
+}
+
+.btn-warning.btn-sm:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+    box-shadow: 0 3px 8px rgba(230, 126, 34, 0.3);
+    transform: translateY(-1px);
+}
+
+.spinner-border {
+    border-right-color: transparent !important; /* Fixes spinner color */
+}
+
+/* --- Alert Styling --- */
+.alert-info {
+    background-color: #eaf6ff;
+    color: #3498db;
+    border: 1px solid #3498db;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* --- Table Styling (Card Look - Consistent with Forward Page) --- */
+
+.table-hover.table-striped {
+    /* Main table container appearance (simulating a card wrapper) */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* Table Header */
+.table-hover.table-striped thead {
+    background-color: #ecf0f1; /* Light gray header */
+}
+
+.table-hover.table-striped th {
+    color: #2c3e50; /* Dark text for headers */
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 15px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    border-bottom: 2px solid #bdc3c7;
+    text-align: left;
+}
+
+/* Table Rows (Card Simulation) */
+.table-hover.table-striped tbody tr {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.table-hover.table-striped tbody tr:nth-child(odd) {
+    background-color: #f9f9f9; /* Retaining striped pattern */
+}
+
+.table-hover.table-striped tbody tr:hover {
+    background-color: #eaf6ff; /* Light blue hover */
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1); /* Subtle blue shadow on hover */
+    transform: translateY(-1px); /* Slight lift */
+    cursor: default;
+}
+
+/* Table Cells */
+.table-hover.table-striped td {
+    padding: 15px 20px;
+    font-size: 0.95rem;
+    color: #34495e;
+    border-top: none;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+/* --- LOGS SECTION (Consistent Card Look) --- */
+.card.shadow-sm {
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.card-header.bg-primary {
+    /* Bright Blue accent for card header (consistent with accents on other pages) */
+    background-color: #3498db !important;
+    color: white !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 12px 20px;
+}
+
+/* Log Content Styling */
+.card-body pre {
+    /* Ensures the log text is legible and contained */
+    background-color: #f4f6f9; /* Off-white background for code block */
+    color: #2c3e50; /* Dark text */
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    padding: 10px;
+    margin-top: 5px;
+}

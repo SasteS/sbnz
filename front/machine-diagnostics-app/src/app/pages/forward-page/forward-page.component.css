@@ -1,0 +1,113 @@
+.container {
+    max-width: 1400px; /* Wider container for the detailed table */
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    border-bottom: 3px solid #3498db; /* Accent color for Forward Chaining */
+    padding-bottom: 10px;
+}
+
+/* --- Action Button Styling --- */
+.actions {
+    margin-bottom: 30px;
+}
+
+.btn-success {
+    /* Style for the 'Run Forward Rules on All' button */
+    background-color: #27ae60;
+    border-color: #27ae60;
+    color: white;
+    font-weight: 600;
+    padding: 10px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-success:hover {
+    background-color: #1e8449;
+    border-color: #1e8449;
+    box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-primary.btn-sm {
+    /* Style for the individual 'Run Forward' button */
+    /* background-color: #3498db; */
+    color: #3498db;
+    border-color: #3498db;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 6px 14px;
+}
+
+.btn-primary.btn-sm:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+/* --- Table Styling --- */
+
+.table-striped {
+    /* Main table container appearance (simulating a card wrapper) */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* Table Header */
+.table-striped thead {
+    background-color: #ecf0f1; /* Light gray header */
+}
+
+.table-striped th {
+    color: #2c3e50; /* Dark text for headers */
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 15px 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    border-bottom: 2px solid #bdc3c7;
+    text-align: left;
+}
+
+/* Table Rows (Card Simulation) */
+.table-striped tbody tr {
+    background-color: #ffffff;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.table-striped tbody tr:nth-child(odd) {
+    background-color: #f9f9f9; /* Retaining striped pattern */
+}
+
+.table-striped tbody tr:hover {
+    background-color: #eaf6ff; /* Light blue hover */
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1); /* Subtle blue shadow on hover */
+    transform: translateY(-1px); /* Slight lift */
+    cursor: default;
+}
+
+/* Table Cells */
+.table-striped td {
+    padding: 15px 20px;
+    font-size: 0.95rem;
+    color: #34495e;
+    border-top: none;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}

@@ -80,6 +80,7 @@ package com.ftn.sbnz.service;
 import com.ftn.sbnz.model.enums.MachineStatus;
 import com.ftn.sbnz.model.enums.OperationContext;
 import com.ftn.sbnz.model.events.*;
+import com.ftn.sbnz.model.models.DroolsLog;
 import com.ftn.sbnz.model.models.Machine;
 import org.drools.core.time.SessionPseudoClock;
 import org.kie.api.runtime.KieContainer;
@@ -88,7 +89,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.Random;
 
 @Service
 public class CepService {
@@ -98,6 +102,49 @@ public class CepService {
     @Autowired
     public CepService(KieContainer kieContainer) {
         this.kieContainer = kieContainer;
+    }
+
+    public Map<String, Object> runCepOnMachine(String machineId) {
+        DroolsLog.clear();
+        Random random = new Random();
+
+        KieSession ksession = kieContainer.newKieSession("cepKsession");
+        SessionPseudoClock clock = ksession.getSessionClock();
+
+        // Create or load machine
+        Machine m = new Machine(machineId, "Machine " + machineId);
+        m.setStatus(MachineStatus.NORMAL);
+        ksession.insert(m);
+        DroolsLog.log("=== Starting CEP Simulation for Machine: " + m.getName() + " ===");
+
+
+        // Simulate random readings for ~1 minute (pseudo time)
+        for (int i = 0; i < 8; i++) {
+            double temp = 70 + random.nextDouble() * 40;      // 70–110°C
+            double vib = 5 + random.nextDouble() * 10;        // 5–15 mm/s
+            double current = 80 + random.nextDouble() * 40;   // 80–120%
+            Date now = new Date();
+
+            // LOGGING SIMULATED VALUES FOR CLARITY
+            DroolsLog.log(String.format("CEP Step %d (Time: +%ds): Temp=%.2f°C, Vib=%.2fmm/s, Curr=%.2f%%",
+                    i + 1, (i + 1) * 10, temp, vib, current));
+
+            ksession.insert(new TemperatureReading(machineId, temp, now));
+            ksession.insert(new VibrationReading(machineId, vib, now));
+            ksession.insert(new CurrentReading(machineId, current, now));
+
+            clock.advanceTime(10, TimeUnit.SECONDS);
+        }
+
+        int fired = ksession.fireAllRules();
+        DroolsLog.log("=== CEP Simulation complete. Rules fired: " + fired + " ===");
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("machine", m);
+        response.put("logs", DroolsLog.getLogs());
+        ksession.dispose();
+
+        return response;
     }
 
     public Machine runCepExample() {
