@@ -21,6 +21,7 @@ import { EditMachineDialogComponent } from './components/edit-machine-dialog/edi
 import { MatSelectModule } from '@angular/material/select';
 import { BackwardPageComponent } from './pages/backward-page/backward-page.component';
 import { BackwardDialogComponent } from './components/backward-dialog/backward-dialog.component';
+import { TemplatePageComponent } from './pages/template-page/template-page.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { BackwardDialogComponent } from './components/backward-dialog/backward-d
     ForwardPageComponent,
     EditMachineDialogComponent,
     BackwardPageComponent,
-    BackwardDialogComponent
+    BackwardDialogComponent,
+    TemplatePageComponent
   ],
   imports: [
     BrowserModule,

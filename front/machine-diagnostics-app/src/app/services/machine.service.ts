@@ -38,4 +38,14 @@ export class MachineService {
     return this.http.post(`${this.apiUrl}/backward-recursive/prove-machine-hypothesis`, payload);
   }
 
+  // TEMPLATE
+  // Generate and compile rules from the template/Excel
+  generateTemplateRules(): Observable<string> {
+    return this.http.get(`${this.apiUrl}/template/run`, { responseType: 'text' });
+  }
+
+  runTemplateDiagnostics(machine: Machine): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/template/diagnose-machine`, machine);
+  }
+
 }

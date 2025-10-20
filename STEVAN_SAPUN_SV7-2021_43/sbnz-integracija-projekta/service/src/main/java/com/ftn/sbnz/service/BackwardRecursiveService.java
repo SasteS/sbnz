@@ -34,17 +34,14 @@ public class BackwardRecursiveService {
         DroolsLog.clear();
         KieSession ksession = kieContainer.newKieSession("bwKsession");
 
-        // 1. Fetch the specific machine from the database
         Machine machine = machineRepository.findById(machineId)
                 .orElseThrow(() -> new RuntimeException("Machine not found: " + machineId));
 
-        // 2. Insert the machine and the hypothesis into the session
         ksession.insert(machine);
 
         int fired = ksession.fireAllRules();
         DroolsLog.log("=== Backward chaining complete (" + fired + " rules fired) ===");
 
-        // 3. Run the specific query
         QueryResults results = ksession.getQueryResults("proveHypothesis", hypothesis, machine.getId());
         boolean proven = results.size() > 0;
 
@@ -69,7 +66,6 @@ public class BackwardRecursiveService {
         );
 
 
-        // 6. Collect final response (Note: 'results' is a List containing ONE DTO)
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("results", List.of(dto));
         response.put("logs", DroolsLog.getLogs());

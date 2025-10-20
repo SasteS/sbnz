@@ -1,0 +1,66 @@
+<div class="container mt-4">
+    <h2>Dynamic Template Diagnostics</h2>
+
+    <div class="actions mb-3 d-flex justify-content-between align-items-center">
+        <button 
+            class="btn btn-success" 
+            (click)="generateRules()" 
+            [disabled]="loading"
+        >
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Generate & Compile Template Rules (Global)
+        </button>
+
+        <div *ngIf="statusMessage" class="alert alert-info py-1 px-3 mb-0 ms-3">
+            {{ statusMessage }}
+        </div>
+    </div>
+
+    <table class="table table-hover table-striped mt-3" *ngIf="machines.length > 0">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Temperature</th>
+                <th>Vibration</th>
+                <th>Rated Current (%)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let m of machines">
+                <td>{{ m.name }}</td>
+                <td>{{ m.status }}</td>
+                <td>{{ m.temperature | number:'1.0-2' }}</td>
+                <td>{{ m.vibration | number:'1.0-2' }}</td>
+                <td>{{ m.currentPercentOfRated | number:'1.0-2' }}</td>
+                <td>
+                    <button 
+                        class="btn btn-warning btn-sm" 
+                        (click)="runTemplateOnMachine(m)"
+                        [disabled]="loading"
+                    >
+                        Fire Template Rules
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div *ngIf="!machines.length && !loading" class="alert alert-warning mt-4">
+        No machines loaded. Check API connection.
+    </div>
+
+    <div *ngIf="templateLogs.length > 0" class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            Template Rule Execution Logs (Last Run)
+        </div>
+        <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
+            <ul class="list-unstyled mb-0 small">
+                <li *ngFor="let log of templateLogs">
+                    <pre class="mb-0 text-dark" style="white-space: pre-wrap; word-break: break-all;">{{ log }}</pre>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

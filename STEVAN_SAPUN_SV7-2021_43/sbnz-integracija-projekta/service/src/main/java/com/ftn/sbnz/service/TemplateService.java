@@ -73,6 +73,7 @@
 
 package com.ftn.sbnz.service;
 
+import com.ftn.sbnz.model.models.DroolsLog;
 import com.ftn.sbnz.model.models.Machine;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -98,7 +99,32 @@ public class TemplateService {
         rebuildContainer(); // initialize empty container
     }
 
-    // --- Run Excel-based template dynamically ---
+    public Map<String, Object> diagnoseMachineWithTemplateRules(Machine machine) {
+        DroolsLog.clear();
+
+        if (this.kieContainer == null) {
+            throw new RuntimeException("KieContainer is not initialized. Run template generation first.");
+        }
+
+        DroolsLog.log("Starting template diagnostics for machine: " + machine.getName());
+        KieSession ksession = this.kieContainer.newKieSession();
+
+        ksession.insert(machine);
+
+        int fired = ksession.fireAllRules();
+        DroolsLog.log("Template diagnostics complete (" + fired + " rules fired).");
+
+        ksession.dispose();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        response.put("machine", machine);
+        response.put("logs", DroolsLog.getLogs());
+
+        return response;
+    }
+
+    // --- Running Excel-based template dynamically ---
     public void runTemplateExample(String excelTemplatePath, String drtTemplatePath) throws Exception {
         InputStream templateStream = getClass().getResourceAsStream(drtTemplatePath);
         InputStream excelStream = getClass().getResourceAsStream(excelTemplatePath);

@@ -4,12 +4,13 @@ message
 
 package rules.template
 import com.ftn.sbnz.model.models.Machine;
+import com.ftn.sbnz.model.models.DroolsLog;
 
 template "Machine temperature alert"
 rule "High temperature alert @{row.rowNumber}"
 when
     $m : Machine( temperature > @{threshold} )
 then
-    System.out.println("Machine " + $m.getName() + " - @{message}");
+    DroolsLog.log("Template Rule: Machine " + $m.getName() + " - @{message}");
 end
 end template

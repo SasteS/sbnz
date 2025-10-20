@@ -46,7 +46,7 @@ export class BackwardPageComponent implements OnInit {
     this.machineService.runBackwardChaining(machine.id, hypothesis).subscribe({
       next: (data) => {
         this.results = data.results;
-        this.logs = data.logs || []; // ✅ logs now works
+        this.logs = data.logs || [];
         this.loading = false;
         // this.machines = data.machines;
         console.log("RESULTS:", this.results);
