@@ -17,6 +17,10 @@ export class TemplatePageComponent implements OnInit {
   // Property to hold the logs from the last template execution
   templateLogs: string[] = [];
 
+  // Dynamic rule creation fields
+  newRuleName = '';
+  newRuleContent = '';
+
   constructor(private machineService: MachineService) {}
 
   ngOnInit(): void {
@@ -67,6 +71,8 @@ export class TemplatePageComponent implements OnInit {
         const updatedMachine = response.machine;
         this.templateLogs = response.logs || []; 
 
+        console.log("LOGS", this.templateLogs)
+
         // Update the local machine list
         const index = this.machines.findIndex(m => m.id === updatedMachine.id);
         if (index !== -1) {
@@ -89,4 +95,27 @@ export class TemplatePageComponent implements OnInit {
       this.loading = false;
     });
   }
+
+  addDynamicRule(): void {
+    if (!this.newRuleName.trim() || !this.newRuleContent.trim()) {
+      this.statusMessage = 'Please provide both rule name and DRL content.';
+      return;
+    }
+
+    this.loading = true;
+    this.statusMessage = `Adding new rule "${this.newRuleName}"...`;
+
+    this.machineService.addDynamicRule(this.newRuleName, this.newRuleContent).subscribe({
+      next: (response) => {
+        this.statusMessage = `Rule "${this.newRuleName}" added successfully.`;
+        this.newRuleName = '';
+        this.newRuleContent = '';
+      },
+      error: (err) => {
+        console.error(err);
+        this.statusMessage = 'Failed to add rule. Check backend logs.';
+      }
+    }).add(() => (this.loading = false));
+  }
+
 }

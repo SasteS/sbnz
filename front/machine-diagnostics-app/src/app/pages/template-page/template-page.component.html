@@ -1,6 +1,43 @@
 <div class="container mt-4">
     <h2>Dynamic Template Diagnostics</h2>
 
+    <!-- DYNAMIC RULE CREATION SECTION -->
+    <div class="card shadow-sm mt-3 mb-4">
+        <div class="card-header bg-dark text-white">
+        Add Dynamic Drools Rule
+        </div>
+        <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+            <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Rule Name (e.g. high-temp-alert)" 
+                [(ngModel)]="newRuleName"
+            />
+            </div>
+            <div class="col-md-8 text-end">
+            <button 
+                class="btn btn-primary" 
+                (click)="addDynamicRule()" 
+                [disabled]="loading"
+            >
+                Add Rule
+            </button>
+            </div>
+        </div>
+
+        <textarea 
+            class="form-control" 
+            rows="8" 
+            placeholder="Enter DRL rule content here..."
+            [(ngModel)]="newRuleContent"
+        ></textarea>
+        </div>
+    </div>
+
+
+
     <div class="actions mb-3 d-flex justify-content-between align-items-center">
         <button 
             class="btn btn-success" 

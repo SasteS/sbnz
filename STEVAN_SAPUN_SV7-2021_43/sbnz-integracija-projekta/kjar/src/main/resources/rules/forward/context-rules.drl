@@ -6,7 +6,7 @@ import com.ftn.sbnz.model.enums.OperationContext
 rule "PostMaintenance - rising temperature"
 no-loop true
 when
-    $m : Machine( context == OperationContext.POST_MAINTENANCE, temperature > 80 )
+    $m : Machine( context == OperationContext.POST_MAINTENANCE, temperature > 80 && temperature < 90 )
 then
     $m.setStatus(MachineStatus.SUSPICIOUS);
     System.out.println("Temperatura raste posle servisa za " + $m.getName());

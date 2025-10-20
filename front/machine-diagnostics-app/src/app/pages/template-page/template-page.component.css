@@ -15,7 +15,64 @@ h2 {
     padding-bottom: 10px;
 }
 
-/* --- Action Button Styling --- */
+/* --- DYNAMIC RULE CREATION CARD STYLES --- */
+
+/* Applied to the outer .card.shadow-sm */
+.card.shadow-sm {
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #bdc3c7; /* Light grey border for definition */
+    overflow: hidden;
+}
+
+/* Applied to the card header */
+.card-header.bg-dark {
+    background-color: #2c3e50 !important; /* Consistent Dark Header */
+    color: white !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 12px 20px;
+}
+
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #bdc3c7;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #3498db; /* Bright blue focus accent */
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+textarea.form-control {
+    font-family: 'Consolas', 'Courier New', monospace; /* Monospace font for DRL code */
+    font-size: 0.9rem;
+    padding: 10px;
+    background-color: #f4f6f9; /* Light background for code input */
+    resize: vertical;
+}
+
+.btn-primary {
+    /* Bright Blue for 'Add Rule' button */
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+    transform: translateY(-1px);
+}
+
+/* --- Action Button Styling (Existing Styles) --- */
 .actions {
     margin-bottom: 30px;
 }
@@ -127,13 +184,6 @@ h2 {
 }
 
 /* --- LOGS SECTION (Consistent Card Look) --- */
-.card.shadow-sm {
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    border: none;
-    overflow: hidden;
-}
-
 .card-header.bg-primary {
     /* Bright Blue accent for card header (consistent with accents on other pages) */
     background-color: #3498db !important;
