@@ -19,6 +19,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { ForwardPageComponent } from './pages/forward-page/forward-page.component';
 import { EditMachineDialogComponent } from './components/edit-machine-dialog/edit-machine-dialog.component';
 import { MatSelectModule } from '@angular/material/select';
+import { BackwardPageComponent } from './pages/backward-page/backward-page.component';
+import { BackwardDialogComponent } from './components/backward-dialog/backward-dialog.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +28,9 @@ import { MatSelectModule } from '@angular/material/select';
     MachinesPageComponent,
     CreateMachineDialogComponent,
     ForwardPageComponent,
-    EditMachineDialogComponent
+    EditMachineDialogComponent,
+    BackwardPageComponent,
+    BackwardDialogComponent
   ],
   imports: [
     BrowserModule,

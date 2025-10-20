@@ -5,7 +5,7 @@ import com.ftn.sbnz.model.enums.MachineStatus
 rule "Current > 120% and overloadOccurred"
 no-loop true
 when
-    $m : Machine( currentPercentOfRated > 120 )
+    $m : Machine( currentPercentOfRated > 120, status != MachineStatus.CRITICAL )
 then
     $m.setStatus(MachineStatus.CRITICAL);
     $m.addRecommendation("Električno preopterećenje – hitno isključi mašinu!");

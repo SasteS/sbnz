@@ -6,7 +6,7 @@ import com.ftn.sbnz.model.enums.OperationContext
 rule "PostMaintenance - rising temperature"
 no-loop true
 when
-    $m : Machine( context == "PostMaintenance", temperature > 80 )
+    $m : Machine( context == OperationContext.POST_MAINTENANCE, temperature > 80 )
 then
     $m.setStatus(MachineStatus.SUSPICIOUS);
     System.out.println("Temperatura raste posle servisa za " + $m.getName());
@@ -17,9 +17,9 @@ end
 rule "HighLoad - increased vibration"
 no-loop true
 when
-    $m : Machine( context == "HighLoad", vibration > 9 )
+    $m : Machine( context == OperationContext.HIGH_LOAD, vibration > 8 )
 then
-    $m.setStatus(MachineStatus.SUSPICIOUS);
+    $m.setStatus(MachineStatus.CRITICAL);
     $m.addRecommendation("Vibracije pri visokom opterećenju – proveri balans.");
     update($m);
 end
@@ -27,7 +27,7 @@ end
 rule "Idle - abnormal temperature"
 no-loop true
 when
-    $m : Machine( context == "Idle", temperature > 60 )
+    $m : Machine( context == OperationContext.IDLE, temperature > 60 )
 then
     $m.setStatus(MachineStatus.RISKY);
     $m.addRecommendation("Temperatura previsoka u praznom hodu – proveri ventilaciju.");

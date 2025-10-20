@@ -1,12 +1,13 @@
 package rules.forward
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
+import com.ftn.sbnz.model.enums.OperationContext
 
 // --- Vibration above normal threshold ---
 rule "Vibration slightly high (Suspicious)"
 no-loop true
 when
-    $m : Machine( vibration > 7.1 && vibration <= 10, status == MachineStatus.NORMAL )
+    $m : Machine( vibration > 7.1 && vibration <= 10, status == MachineStatus.NORMAL, context != OperationContext.HIGH_LOAD )
 then
     $m.setStatus(MachineStatus.SUSPICIOUS);
     $m.addRecommendation("Proveri balans rotora – blago povećane vibracije.");
@@ -18,7 +19,7 @@ end
 rule "Vibration very high (Risky)"
 no-loop true
 when
-    $m : Machine( vibration > 10, status != MachineStatus.CRITICAL )
+    $m : Machine( vibration > 10, status not in ( MachineStatus.RISKY,  MachineStatus.CRITICAL ), context != OperationContext.HIGH_LOAD )
 then
     $m.setStatus(MachineStatus.RISKY);
     $m.addRecommendation("Jako povećane vibracije – proveri balans i ležajeve.");

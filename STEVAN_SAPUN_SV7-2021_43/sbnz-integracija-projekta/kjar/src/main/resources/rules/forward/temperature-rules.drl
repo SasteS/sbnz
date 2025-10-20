@@ -1,12 +1,13 @@
 package rules.forward
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
+import com.ftn.sbnz.model.enums.OperationContext
 
 // --- Moderate overheat ---
 rule "Temperature > 85°C (Risky)"
 no-loop true
 when
-    $m : Machine( temperature > 85 && temperature <= 90, status not in ( MachineStatus.RISKY, MachineStatus.CRITICAL) )
+    $m : Machine( temperature > 85 && temperature <= 90, status not in ( MachineStatus.RISKY, MachineStatus.CRITICAL), context not in (OperationContext.IDLE, OperationContext.POST_MAINTENANCE) )
 then
     $m.setStatus(MachineStatus.RISKY);
     $m.addRecommendation("Proveri hlađenje – temperatura iznad praga za normalni režim.");

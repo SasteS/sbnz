@@ -1,6 +1,8 @@
 package com.ftn.sbnz.service;
 
+import com.ftn.sbnz.model.dto.BackwardResultDTO;
 import com.ftn.sbnz.model.enums.MachineStatus;
+import com.ftn.sbnz.model.models.DroolsLog;
 import com.ftn.sbnz.model.models.Machine;
 import org.kie.api.definition.type.FactType;
 import org.kie.api.runtime.KieContainer;
@@ -11,39 +13,90 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class BackwardRecursiveService {
 
     private final KieContainer kieContainer;
+    @Autowired
+    private MachineRepository machineRepository;
 
     @Autowired
-    public BackwardRecursiveService(KieContainer kieContainer) {
+    public BackwardRecursiveService(KieContainer kieContainer, MachineRepository machineRepository) {
         this.kieContainer = kieContainer;
+        this.machineRepository = machineRepository;
     }
 
-    public List<String> runBackwardChainingExample() throws Exception {
+    public Map<String, Object> runBackwardChainingForOne(String machineId, String hypothesis) throws Exception {
+        DroolsLog.clear();
         KieSession ksession = kieContainer.newKieSession("bwKsession");
 
-        // -----------------------------------------------------------------
-        // Example 1: Overheat scenario
+        // 1. Fetch the specific machine from the database
+        Machine machine = machineRepository.findById(machineId)
+                .orElseThrow(() -> new RuntimeException("Machine not found: " + machineId));
+
+        // 2. Insert the machine and the hypothesis into the session
+        ksession.insert(machine);
+
+        int fired = ksession.fireAllRules();
+        DroolsLog.log("=== Backward chaining complete (" + fired + " rules fired) ===");
+
+        // 3. Run the specific query
+        QueryResults results = ksession.getQueryResults("proveHypothesis", hypothesis, machine.getId());
+        boolean proven = results.size() > 0;
+
+        // 4. Fire rules again to ensure any consequences of the query are processed
+        int firedAfterQueries = ksession.fireAllRules();
+        DroolsLog.log("=== Rules fired after query checks: " + firedAfterQueries + " ===");
+
+        // BEATS ME WHY THIS WORKS.
+        boolean logProvenCheck = DroolsLog.getLogs().stream().anyMatch(log -> log.contains("Backward: " + hypothesis + " proven for"));
+
+        // 5. Construct the single DTO result
+        String recs = machine.getRecommendations().isEmpty()
+                ? ""
+                : String.join(", ", machine.getRecommendations());
+
+        BackwardResultDTO dto = new BackwardResultDTO(
+                machine.getName(),
+                hypothesis,
+                logProvenCheck,// proven,
+                machine.getStatus().toString(),
+                recs
+        );
+
+
+        // 6. Collect final response (Note: 'results' is a List containing ONE DTO)
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("results", List.of(dto));
+        response.put("logs", DroolsLog.getLogs());
+
+        ksession.dispose();
+        return response;
+    }
+
+    public Map<String, Object> runBackwardChainingExample() throws Exception {
+        DroolsLog.clear(); // 🧹 clear old logs
+        KieSession ksession = kieContainer.newKieSession("bwKsession");
+
+        // --- Example setup ---
         Machine m1 = new Machine("M1", "Pump A");
-        m1.setTemperature(92.0); // triggers TemperatureHigh → Overheat
+        m1.setTemperature(92.0);
         m1.setVibration(5.0);
         m1.setCurrentPercentOfRated(95.0);
         m1.setStatus(MachineStatus.NORMAL);
         ksession.insert(m1);
 
-        // Example 2: Bearing fault scenario (temp + vibration)
         Machine m2 = new Machine("M2", "Compressor B");
         m2.setTemperature(90.0);
-        m2.setVibration(8.0); // triggers BearingFault path
+        m2.setVibration(8.0);
         m2.setCurrentPercentOfRated(90.0);
         m2.setStatus(MachineStatus.NORMAL);
         ksession.insert(m2);
 
-        // Example 3: Electrical overload scenario
         Machine m3 = new Machine("M3", "Motor C");
         m3.setTemperature(60.0);
         m3.setVibration(5.0);
@@ -52,48 +105,52 @@ public class BackwardRecursiveService {
         m3.setStatus(MachineStatus.NORMAL);
         ksession.insert(m3);
 
-        // -----------------------------------------------------------------
-        // Fire rules (this will initialize dependencies + run backward proofs)
+        // --- Run reasoning ---
         int fired = ksession.fireAllRules();
-        System.out.println("=== Backward chaining complete (" + fired + " rules fired) ===\n");
+        DroolsLog.log("=== Backward chaining complete (" + fired + " rules fired) ===");
 
-        // -----------------------------------------------------------------
-        // Print dependency tree (to visualize reasoning structure)
-        printDependencyTree(ksession, "AtRisk");
-        printDependencyTree(ksession, "BearingFault");
-        printDependencyTree(ksession, "ElectricalOverload");
-
-        // -----------------------------------------------------------------
-        // Run and collect proof queries (per machine)
-        List<String> proven = new ArrayList<>();
+        List<BackwardResultDTO> backwardResults = new ArrayList<>();
         String[] hypotheses = {"Overheat", "BearingFault", "ElectricalOverload"};
         List<Machine> machines = List.of(m1, m2, m3);
 
         for (Machine m : machines) {
             for (String h : hypotheses) {
-                // ✅ This is where you run the query to see if the hypothesis is proven
+                // Query Drools for the hypothesis on this machine
                 QueryResults results = ksession.getQueryResults("proveHypothesis", h, m.getId());
+                boolean proven = results.size() > 0;
 
-                if (results.size() > 0) {
-                    proven.add("✅ Proven hypothesis: " + h + " for " + m.getName());
-                } else {
-                    proven.add("❌ Not proven: " + h + " for " + m.getName());
-                }
+                // Combine recommendations into a single string for the DTO
+                String recs = m.getRecommendations().isEmpty()
+                        ? ""
+                        : String.join(", ", m.getRecommendations());
+
+                // --- Construct the DTO for each check ---
+                BackwardResultDTO dto = new BackwardResultDTO(
+                        m.getName(),
+                        h,
+                        proven,
+                        m.getStatus().toString(),
+                        recs // Combined string of recommendations
+                );
+                backwardResults.add(dto);
             }
         }
-        // MUST CALL AGAIN TO TRIGGER QUERY DEPENDANT RULES!!!!!!!
-        int firedAfterQueries = ksession.fireAllRules();
-        System.out.println("=== Rules fired after query checks: " + firedAfterQueries + " ===\n");
 
-        // -----------------------------------------------------------------
-        // Show resulting machine states
-        System.out.println("\n=== Machine States After Backward Reasoning ===");
-        System.out.println(m1.getName() + " → " + m1.getStatus() + " | " + m1.getRecommendations());
-        System.out.println(m2.getName() + " → " + m2.getStatus() + " | " + m2.getRecommendations());
-        System.out.println(m3.getName() + " → " + m3.getStatus() + " | " + m3.getRecommendations());
+        int firedAfterQueries = ksession.fireAllRules();
+        DroolsLog.log("=== Rules fired after query checks: " + firedAfterQueries + " ===");
+
+        // --- Collect results ---
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        // 1. Send the DTO list under the key 'results' (Frontend expects this)
+        response.put("results", backwardResults);
+        // 2. Send the logs (Frontend expects this)
+        response.put("logs", DroolsLog.getLogs());
+        // 3. (Optional) Send the updated machine facts
+        response.put("machines", machines);
 
         ksession.dispose();
-        return proven;
+        return response;
     }
 
     // -----------------------------------------------------------------

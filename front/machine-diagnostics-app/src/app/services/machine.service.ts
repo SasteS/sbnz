@@ -29,5 +29,13 @@ export class MachineService {
     return this.http.post<Machine[]>('http://localhost:8080/api/forward/run-batch', machines);
   }
 
+  // BACKWARD
+  runBackwardChaining(machineId: string, hypothesis: string): Observable<any> {
+    const payload = {
+        machineId: machineId,
+        hypothesis: hypothesis
+    };
+    return this.http.post(`${this.apiUrl}/backward-recursive/prove-machine-hypothesis`, payload);
+  }
 
 }

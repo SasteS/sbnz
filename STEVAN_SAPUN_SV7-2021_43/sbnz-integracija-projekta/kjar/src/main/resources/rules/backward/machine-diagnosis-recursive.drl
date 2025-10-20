@@ -28,7 +28,7 @@ rule "Init backward dependencies"
 when
     not(HypothesisDependency())
 then
-    System.out.println("Initializing backward dependency graph...");
+    DroolsLog.log("Initializing backward dependency graph...");
 
     // --- Top-level goals ---
     insert(new HypothesisDependency("AtRisk", Arrays.asList("TwoAnomaliesIn")));
@@ -104,7 +104,7 @@ then
     $m.addRecommendation("Temperatura visoka — proveri hlađenje.");
     update($m);
     insert(new DiagnosisComplete($id, "Overheat"));
-    System.out.println("Backward: Overheat proven for " + $m.getName());
+    DroolsLog.log("Backward: Overheat proven for " + $m.getName());
 end
 
 // --- If BearingFault proven ---
@@ -119,7 +119,7 @@ then
     $m.addRecommendation("Habanje ležaja — proveri balans i podmazivanje.");
     update($m);
     insert(new DiagnosisComplete($id, "BearingFault"));
-    System.out.println("Backward: Bearing fault proven for " + $m.getName());
+    DroolsLog.log("Backward: Bearing fault proven for " + $m.getName());
 end
 
 // --- If ElectricalOverload proven ---
@@ -134,5 +134,5 @@ then
     $m.addRecommendation("Električno preopterećenje — proveri električne komponente.");
     update($m);
     insert(new DiagnosisComplete($id, "ElectricalOverload"));
-    System.out.println("Backward: Electrical overload proven for " + $m.getName());
+    DroolsLog.log("Backward: Electrical overload proven for " + $m.getName());
 end

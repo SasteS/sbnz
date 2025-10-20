@@ -1,0 +1,17 @@
+<h3 mat-dialog-title>Select Hypothesis</h3>
+
+<div mat-dialog-content>
+  <p>Choose what to diagnose for <strong>{{ data.machine.name }}</strong>:</p>
+
+  <mat-form-field appearance="fill" class="w-100">
+    <mat-label>Hypothesis</mat-label>
+    <mat-select [(value)]="selectedHypothesis">
+      <mat-option *ngFor="let hyp of hypotheses" [value]="hyp">{{ hyp }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div mat-dialog-actions>
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="confirm()">Diagnose</button>
+</div>
