@@ -57,82 +57,78 @@ then
 end
 
 // ---------------------------------------------------------------------
-// QUERY: proveHypothesis
+// QUERY: proveHypothesis (Back to 2 parameters for simplicity)
 // ---------------------------------------------------------------------
 query proveHypothesis( String $hypothesis, String $machineId )
+    // This line ensures the query returns a result row bound to the machine
+    $m : Machine(id == $machineId)
+    and
     (
-        // --- BASE CASES ---
-        eval(DroolsLog.log("Checking base case for: " + $hypothesis + " on machine " + $machineId))
-        and
         (
-            ( eval($hypothesis.equals("AskableVibration")) and exists(Machine(id == $machineId, vibration > 7.1)) ) or
-            ( eval($hypothesis.equals("AskableTemperature")) and exists(Machine(id == $machineId, temperature > 85)) ) or
-            ( eval($hypothesis.equals("AskableCurrent")) and exists(Machine(id == $machineId, currentPercentOfRated > 100)) ) or
-            ( eval($hypothesis.equals("AskableOverload")) and exists(Machine(id == $machineId, overloadTripCount >= 1)) )
+            // --- BASE CASES ---
+            ( eval($hypothesis.equals("AskableVibration")) and Machine(this == $m, vibration > 7.1) ) or
+            ( eval($hypothesis.equals("AskableTemperature")) and Machine(this == $m, temperature > 85) ) or
+            ( eval($hypothesis.equals("AskableCurrent")) and Machine(this == $m, currentPercentOfRated > 100) ) or
+            ( eval($hypothesis.equals("AskableOverload")) and Machine(this == $m, overloadTripCount >= 1) )
         )
-        and eval(DroolsLog.log("✅ Base proven: " + $hypothesis + " for " + $machineId))
-    )
-    or
-    (
-        // --- RECURSIVE CASE ---
-        eval(DroolsLog.log("Recursively proving: " + $hypothesis + " for machine " + $machineId))
-        and
-        $dep : HypothesisDependency(conclusion == $hypothesis, $pre : prerequisites)
-        and
-        not (
-            String($p : this) from $pre
-            and eval(DroolsLog.log("  ↪ Proving subgoal: " + $p + " for " + $machineId))
-            and not proveHypothesis($p, $machineId;)
+        or
+        (
+            // --- RECURSIVE CASE ---
+            HypothesisDependency(conclusion == $hypothesis, $pre : prerequisites)
+            and
+            not (
+                String($p : this) from $pre
+                and not proveHypothesis($p, $machineId;) // Recursive call with 2 params
+            )
         )
-        and eval(DroolsLog.log("Proven recursively: " + $hypothesis + " for " + $machineId))
     )
 end
 
 // ---------------------------------------------------------------------
-// RULES THAT ACT ON PROVEN HYPOTHESES
+// UPDATED REACTION RULES
 // ---------------------------------------------------------------------
 
-// --- If Overheat proven ---
 rule "Overheat proven -> escalate machine"
 no-loop true
 when
     $m : Machine($id : id, status != com.ftn.sbnz.model.enums.MachineStatus.CRITICAL)
-    proveHypothesis("Overheat", $id;)
+    proveHypothesis("Overheat", $id;) // Call with 2 params
     not DiagnosisComplete(machineId == $id, hypothesis == "Overheat")
 then
-    $m.setStatus(com.ftn.sbnz.model.enums.MachineStatus.RISKY);
-    $m.addRecommendation("Temperatura visoka — proveri hlađenje.");
-    update($m);
+    modify($m) {
+        setStatus(com.ftn.sbnz.model.enums.MachineStatus.RISKY),
+        addRecommendation("Temperatura visoka — proveri hlađenje.")
+    }
     insert(new DiagnosisComplete($id, "Overheat"));
     DroolsLog.log("Backward: Overheat proven for " + $m.getName());
 end
 
-// --- If BearingFault proven ---
 rule "BearingFault proven -> escalate machine"
 no-loop true
 when
     $m : Machine($id : id, status != com.ftn.sbnz.model.enums.MachineStatus.CRITICAL)
-    proveHypothesis("BearingFault", $id;)
+    proveHypothesis("BearingFault", $id;) // Call with 2 params
     not DiagnosisComplete(machineId == $id, hypothesis == "BearingFault")
 then
-    $m.setStatus(com.ftn.sbnz.model.enums.MachineStatus.RISKY);
-    $m.addRecommendation("Habanje ležaja — proveri balans i podmazivanje.");
-    update($m);
+    modify($m) {
+        setStatus(com.ftn.sbnz.model.enums.MachineStatus.RISKY),
+        addRecommendation("Habanje ležaja — proveri balans i podmazivanje.")
+    }
     insert(new DiagnosisComplete($id, "BearingFault"));
     DroolsLog.log("Backward: Bearing fault proven for " + $m.getName());
 end
 
-// --- If ElectricalOverload proven ---
 rule "ElectricalOverload proven -> escalate machine"
 no-loop true
 when
     $m : Machine($id : id, status != com.ftn.sbnz.model.enums.MachineStatus.CRITICAL)
-    proveHypothesis("ElectricalOverload", $id;)
+    proveHypothesis("ElectricalOverload", $id;) // Call with 2 params
     not DiagnosisComplete(machineId == $id, hypothesis == "ElectricalOverload")
 then
-    $m.setStatus(com.ftn.sbnz.model.enums.MachineStatus.CRITICAL);
-    $m.addRecommendation("Električno preopterećenje — proveri električne komponente.");
-    update($m);
+    modify($m) {
+        setStatus(com.ftn.sbnz.model.enums.MachineStatus.CRITICAL),
+        addRecommendation("Električno preopterećenje — proveri električne komponente.")
+    }
     insert(new DiagnosisComplete($id, "ElectricalOverload"));
     DroolsLog.log("Backward: Electrical overload proven for " + $m.getName());
 end
