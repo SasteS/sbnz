@@ -23,6 +23,13 @@ import { BackwardPageComponent } from './pages/backward-page/backward-page.compo
 import { BackwardDialogComponent } from './components/backward-dialog/backward-dialog.component';
 import { TemplatePageComponent } from './pages/template-page/template-page.component';
 import { CepPageComponent } from './pages/cep-page/cep-page.component';
+import { IntelligenceFeedComponent } from './components/intelligence-feed/intelligence-feed.component';
+
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
+import { ReasoningDetailsDialogComponent } from './components/reasoning-details-dialog/reasoning-details-dialog.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +41,9 @@ import { CepPageComponent } from './pages/cep-page/cep-page.component';
     BackwardPageComponent,
     BackwardDialogComponent,
     TemplatePageComponent,
-    CepPageComponent
+    CepPageComponent,
+    IntelligenceFeedComponent,
+    ReasoningDetailsDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -47,7 +56,11 @@ import { CepPageComponent } from './pages/cep-page/cep-page.component';
     MatInputModule,
     MatTableModule,
     MatFormFieldModule,
-    MatSelectModule
+    MatSelectModule,
+    MatMenuModule,
+    MatIconModule,
+    MatBadgeModule,
+    MatDividerModule
   ],
   providers: [
     provideAnimationsAsync()

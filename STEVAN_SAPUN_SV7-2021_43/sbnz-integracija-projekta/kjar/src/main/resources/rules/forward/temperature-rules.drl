@@ -2,17 +2,26 @@ package rules.forward
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
 import com.ftn.sbnz.model.enums.OperationContext
+import com.ftn.sbnz.model.models.IDiagnosticService // Import the interface
+
+global IDiagnosticService backwardService; // Use the interface type
 
 // --- Moderate overheat ---
 rule "Temperature > 85°C (Risky)"
 no-loop true
 when
-    $m : Machine( temperature > 85 && temperature <= 90, status not in ( MachineStatus.RISKY, MachineStatus.CRITICAL), context not in (OperationContext.IDLE, OperationContext.POST_MAINTENANCE) )
+    $m : Machine( temperature > 85 && temperature <= 90,
+                  status not in ( MachineStatus.RISKY, MachineStatus.CRITICAL),
+                  context not in (OperationContext.IDLE, OperationContext.POST_MAINTENANCE) )
 then
-    $m.setStatus(MachineStatus.RISKY);
-    $m.addRecommendation("Proveri hlađenje – temperatura iznad praga za normalni režim.");
-    update($m);
-    System.out.println("Rule fired: Temperature > 85°C (Risky), " + $m.getName());
+    modify($m) {
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("Proveri hlađenje – temperatura iznad praga za normalni režim.")
+    }
+    System.out.println("Forward Rule: Moderate heat detected on " + $m.getName());
+
+    // TRIGGER DIAGNOSIS: Call the backward chaining service
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat");
 end
 
 // --- Critical temperature under high load ---
@@ -21,9 +30,13 @@ no-loop true
 when
     $m : Machine( temperature > 90, status != MachineStatus.CRITICAL )
 then
-    $m.setStatus(MachineStatus.CRITICAL);
-    $m.addRecommendation("Kritično pregrevanje pri visokom opterećenju – razmotri gašenje mašine!");
-    // shutdownMachine($m);
-    update($m);
-    System.out.println("Rule fired: Critical overheat (Critical), " + $m.getName());
+    modify($m) {
+        setStatus(MachineStatus.CRITICAL),
+        addRecommendation("Kritično pregrevanje! Razmotri gašenje mašine.")
+    }
+    System.out.println("Forward Rule: Critical heat detected on " + $m.getName());
+
+//    // TRIGGER DIAGNOSIS: Call the backward chaining service
+//    backwardService.runBackwardChainingForOne($m.getId(), "Overheat");
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat");
 end

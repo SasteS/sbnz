@@ -3,18 +3,24 @@ package com.ftn.sbnz.service;
 import com.ftn.sbnz.model.enums.MachineStatus;
 import com.ftn.sbnz.model.enums.OperationContext;
 import com.ftn.sbnz.model.models.Machine;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class MachineService {
 
     private final MachineRepository machineRepository;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     @Autowired
     public MachineService(MachineRepository machineRepository) {
@@ -44,5 +50,15 @@ public class MachineService {
 
     public List<Machine> findAll() {
         return machineRepository.findAll();
+    }
+
+    public void sendManualCommand(String machineId, String action) {
+        String queueName = "commands." + machineId;
+        Map<String, String> command = new HashMap<>();
+        command.put("action", action);
+
+        // Sends the JSON {"action": "ACTIVATE_COOLING"} to the specific Go routine
+        rabbitTemplate.convertAndSend(queueName, command);
+        System.out.println("Sent " + action + " to machine " + machineId);
     }
 }

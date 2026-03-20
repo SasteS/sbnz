@@ -1,0 +1,21 @@
+<button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Intelligence Feed">
+  <mat-icon 
+  [matBadge]="(diagnoses$ | async)?.length" matBadgeColor="warn" [matBadgeHidden]="(diagnoses$ | async)?.length === 0">psychology</mat-icon>
+</button>
+
+<mat-menu #menu="matMenu" class="intelligence-menu">
+  <div class="header">KBS Intelligence Feed</div>
+  <mat-divider></mat-divider>
+  
+  <div *ngIf="(diagnoses$ | async)?.length === 0" class="empty-msg">
+    No anomalies detected yet.
+  </div>
+
+  <button mat-menu-item *ngFor="let item of diagnoses$ | async" (click)="viewDetails(item)">
+    <mat-icon color="warn">warning</mat-icon>
+    <span>
+      <b>{{item.results[0].machineName}}</b>: {{item.results[0].hypothesis}} Proven
+      <br><small>{{item.timestamp | date:'HH:mm:ss'}}</small>
+    </span>
+  </button>
+</mat-menu>

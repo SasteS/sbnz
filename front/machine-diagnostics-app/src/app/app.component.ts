@@ -1,10 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { WebsocketService } from './services/websocket.service';
+
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-  title = 'machine-diagnostics-app';
+export class AppComponent implements OnInit {
+  
+  constructor(private websocketService: WebsocketService) {}
+
+  ngOnInit() {
+    // Start listening for RabbitMQ -> Drools -> WebSocket alerts
+    this.websocketService.connect();
+  }
 }

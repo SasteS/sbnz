@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Reasoning Details: {{data.machineName}}</h2>
+
+<mat-dialog-content>
+  <div class="result-summary">
+    <p><b>Hypothesis:</b> {{data.hypothesis}}</p>
+    <p><b>Proven:</b> 
+      <span [class.proven]="data.proven" [class.failed]="!data.proven">
+        {{data.proven ? '✅ Yes' : '❌ No'}}
+      </span>
+    </p>
+    <p><b>Status:</b> {{data.status}}</p>
+  </div>
+
+  <h3>Recommendations:</h3>
+  <p class="recs">{{data.recommendations || 'No specific recommendations.'}}</p>
+
+  <h3>Detailed Reasoning Log:</h3>
+  <div class="log-container">
+    <div *ngFor="let log of data.logs" class="log-line">
+        {{log}}
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+</mat-dialog-actions>

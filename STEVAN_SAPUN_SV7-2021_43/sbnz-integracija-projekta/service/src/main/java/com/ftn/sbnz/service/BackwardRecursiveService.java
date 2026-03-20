@@ -3,6 +3,7 @@ package com.ftn.sbnz.service;
 import com.ftn.sbnz.model.dto.BackwardResultDTO;
 import com.ftn.sbnz.model.enums.MachineStatus;
 import com.ftn.sbnz.model.models.DroolsLog;
+import com.ftn.sbnz.model.models.IDiagnosticService;
 import com.ftn.sbnz.model.models.Machine;
 import org.kie.api.definition.type.FactType;
 import org.kie.api.runtime.KieContainer;
@@ -10,16 +11,21 @@ import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.rule.QueryResults;
 import org.kie.api.runtime.rule.QueryResultsRow;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
-public class BackwardRecursiveService {
+public class BackwardRecursiveService implements IDiagnosticService {
 
     private final KieContainer kieContainer;
+
     @Autowired
     private MachineRepository machineRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     public BackwardRecursiveService(KieContainer kieContainer, MachineRepository machineRepository) {
@@ -127,14 +133,21 @@ public class BackwardRecursiveService {
         return response;
     }
 
+    @Override
+    public void triggerAutomaticDiagnosis(String machineId, String hypothesis) {
+        try {
+            // 1. Run the logic you already wrote
+            Map<String, Object> result = runBackwardChainingForOne(machineId, hypothesis);
 
+            // 2. PUSH to Frontend via WebSocket!
+            // Everyone subscribed to /topic/diagnosis will see this instantly
+            messagingTemplate.convertAndSend("/topic/diagnosis", result);
+            System.out.println("Diagnosis: " + result.get("results"));
 
-
-
-
-
-
-
+        } catch (Exception e) {
+            messagingTemplate.convertAndSend("/topic/errors", "Diagnosis failed: " + e.getMessage());
+        }
+    }
 
 
 //    public Map<String, Object> runBackwardChainingExample() throws Exception {
