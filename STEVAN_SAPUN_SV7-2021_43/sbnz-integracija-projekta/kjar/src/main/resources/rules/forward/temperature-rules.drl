@@ -21,7 +21,7 @@ then
     System.out.println("Forward Rule: Moderate heat detected on " + $m.getName());
 
     // TRIGGER DIAGNOSIS: Call the backward chaining service
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat");
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat", 85.0);
 end
 
 // --- Critical temperature under high load ---
@@ -38,5 +38,5 @@ then
 
 //    // TRIGGER DIAGNOSIS: Call the backward chaining service
 //    backwardService.runBackwardChainingForOne($m.getId(), "Overheat");
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat");
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat", 90.0);
 end

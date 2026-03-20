@@ -77,7 +77,7 @@ public class BackwardRecursiveService implements IDiagnosticService {
 //        return response;
 //    }
 
-    public Map<String, Object> runBackwardChainingForOne(String machineId, String hypothesis) throws Exception {
+    public Map<String, Object> runBackwardChainingForOne(String machineId, String hypothesis, double threshold) throws Exception {
         DroolsLog.clear();
         KieSession ksession = kieContainer.newKieSession("bwKsession");
 
@@ -98,7 +98,7 @@ public class BackwardRecursiveService implements IDiagnosticService {
         // 4. Generate the Reasoning Trace (The "How" and "Why")
         if (proven) {
             DroolsLog.log("--- REASONING PATH FOR " + hypothesis + " ---");
-            recordReasoningTrace(ksession, machine, hypothesis, 0);
+            recordReasoningTrace(ksession, machine, hypothesis, 0, threshold);
             DroolsLog.log("-------------------------------------------");
         } else {
             DroolsLog.log("⚠️ Hypothesis " + hypothesis + " could not be proven for " + machine.getName());
@@ -134,10 +134,10 @@ public class BackwardRecursiveService implements IDiagnosticService {
     }
 
     @Override
-    public void triggerAutomaticDiagnosis(String machineId, String hypothesis) {
+    public void triggerAutomaticDiagnosis(String machineId, String hypothesis, double threshold) throws Exception {
         try {
             // 1. Run the logic you already wrote
-            Map<String, Object> result = runBackwardChainingForOne(machineId, hypothesis);
+            Map<String, Object> result = runBackwardChainingForOne(machineId, hypothesis, threshold);
 
             // 2. PUSH to Frontend via WebSocket!
             // Everyone subscribed to /topic/diagnosis will see this instantly
@@ -145,6 +145,7 @@ public class BackwardRecursiveService implements IDiagnosticService {
             System.out.println("Diagnosis: " + result.get("results"));
 
         } catch (Exception e) {
+            e.printStackTrace();
             messagingTemplate.convertAndSend("/topic/errors", "Diagnosis failed: " + e.getMessage());
         }
     }
@@ -231,78 +232,78 @@ public class BackwardRecursiveService implements IDiagnosticService {
 
 
 
-public Map<String, Object> runBackwardChainingExample() throws Exception {
-    DroolsLog.clear();
-    KieSession ksession = kieContainer.newKieSession("bwKsession");
-
-    // 1. Setup Data
-    Machine m1 = new Machine("M1", "Pump A");
-    m1.setTemperature(92.0);
-    m1.setVibration(8.0);
-    m1.setCurrentPercentOfRated(95.0);
-    m1.setStatus(MachineStatus.NORMAL);
-    ksession.insert(m1);
-
-    // 2. Initialize the Dependency Graph (the "Init" rule)
-    int initialFired = ksession.fireAllRules();
-    DroolsLog.log("System initialized. Rules fired: " + initialFired);
-
-    // 3. Define what we are looking for
-    String[] hypotheses = {"Overheat", "BearingFault", "ElectricalOverload", "AtRisk"};
-    List<Machine> machines = List.of(m1);
-
-    // This map stores the result of the query itself
-    Map<String, Boolean> queryResultsMap = new HashMap<>();
-
-    // 4. Run Queries
-    for (Machine m : machines) {
-        for (String h : hypotheses) {
-            QueryResults results = ksession.getQueryResults("proveHypothesis", h, m.getId());
-            boolean isProven = results.size() > 0;
-            queryResultsMap.put(m.getId() + h, isProven);
-
-            if (isProven) {
-                DroolsLog.log("--- REASONING PATH FOR " + h + " ---");
-                recordReasoningTrace(ksession, m, h, 0);
-                DroolsLog.log("-------------------------------------------");
-            }
-        }
-    }
-
-    // 5. Fire Rules AGAIN
-    // This executes the "Overheat proven -> escalate" rules that were activated by the queries
-    int reactionFired = ksession.fireAllRules();
-    DroolsLog.log("=== Backward reasoning reaction complete (" + reactionFired + " rules fired) ===");
-
-    // 6. Build DTOs (Now that Machine objects have been updated by rules)
-    List<BackwardResultDTO> backwardResults = new ArrayList<>();
-    for (Machine m : machines) {
-        for (String h : hypotheses) {
-            boolean proven = queryResultsMap.getOrDefault(m.getId() + h, false);
-
-            String recs = (m.getRecommendations() == null || m.getRecommendations().isEmpty())
-                    ? ""
-                    : String.join(", ", m.getRecommendations());
-
-            backwardResults.add(new BackwardResultDTO(
-                    m.getName(),
-                    h,
-                    proven,
-                    m.getStatus().toString(),
-                    recs
-            ));
-        }
-    }
-
-    // 7. Collect results
-    Map<String, Object> response = new LinkedHashMap<>();
-    response.put("results", backwardResults);
-    response.put("logs", DroolsLog.getLogs());
-    response.put("machines", machines);
-
-    ksession.dispose();
-    return response;
-}
+//public Map<String, Object> runBackwardChainingExample() throws Exception {
+//    DroolsLog.clear();
+//    KieSession ksession = kieContainer.newKieSession("bwKsession");
+//
+//    // 1. Setup Data
+//    Machine m1 = new Machine("M1", "Pump A");
+//    m1.setTemperature(92.0);
+//    m1.setVibration(8.0);
+//    m1.setCurrentPercentOfRated(95.0);
+//    m1.setStatus(MachineStatus.NORMAL);
+//    ksession.insert(m1);
+//
+//    // 2. Initialize the Dependency Graph (the "Init" rule)
+//    int initialFired = ksession.fireAllRules();
+//    DroolsLog.log("System initialized. Rules fired: " + initialFired);
+//
+//    // 3. Define what we are looking for
+//    String[] hypotheses = {"Overheat", "BearingFault", "ElectricalOverload", "AtRisk"};
+//    List<Machine> machines = List.of(m1);
+//
+//    // This map stores the result of the query itself
+//    Map<String, Boolean> queryResultsMap = new HashMap<>();
+//
+//    // 4. Run Queries
+//    for (Machine m : machines) {
+//        for (String h : hypotheses) {
+//            QueryResults results = ksession.getQueryResults("proveHypothesis", h, m.getId());
+//            boolean isProven = results.size() > 0;
+//            queryResultsMap.put(m.getId() + h, isProven);
+//
+//            if (isProven) {
+//                DroolsLog.log("--- REASONING PATH FOR " + h + " ---");
+//                recordReasoningTrace(ksession, m, h, 0, );
+//                DroolsLog.log("-------------------------------------------");
+//            }
+//        }
+//    }
+//
+//    // 5. Fire Rules AGAIN
+//    // This executes the "Overheat proven -> escalate" rules that were activated by the queries
+//    int reactionFired = ksession.fireAllRules();
+//    DroolsLog.log("=== Backward reasoning reaction complete (" + reactionFired + " rules fired) ===");
+//
+//    // 6. Build DTOs (Now that Machine objects have been updated by rules)
+//    List<BackwardResultDTO> backwardResults = new ArrayList<>();
+//    for (Machine m : machines) {
+//        for (String h : hypotheses) {
+//            boolean proven = queryResultsMap.getOrDefault(m.getId() + h, false);
+//
+//            String recs = (m.getRecommendations() == null || m.getRecommendations().isEmpty())
+//                    ? ""
+//                    : String.join(", ", m.getRecommendations());
+//
+//            backwardResults.add(new BackwardResultDTO(
+//                    m.getName(),
+//                    h,
+//                    proven,
+//                    m.getStatus().toString(),
+//                    recs
+//            ));
+//        }
+//    }
+//
+//    // 7. Collect results
+//    Map<String, Object> response = new LinkedHashMap<>();
+//    response.put("results", backwardResults);
+//    response.put("logs", DroolsLog.getLogs());
+//    response.put("machines", machines);
+//
+//    ksession.dispose();
+//    return response;
+//}
 
 
 
@@ -349,12 +350,12 @@ public Map<String, Object> runBackwardChainingExample() throws Exception {
 
 
 
-    private void recordReasoningTrace(KieSession ksession, Machine m, String node, int indent) throws Exception {
+    private void recordReasoningTrace(KieSession ksession, Machine m, String node, int indent, double threshold) throws Exception {
         String padding = "  ".repeat(indent);
         FactType depType = ksession.getKieBase().getFactType("rules.backward", "HypothesisDependency");
 
         // 1. Check if this is a Base Case (Leaf Node)
-        String baseReason = getBaseConditionReason(m, node);
+        String baseReason = getBaseConditionReason(m, node, threshold);
         if (baseReason != null) {
             DroolsLog.log(padding + "✅ " + node + " is TRUE because: " + baseReason);
             return;
@@ -374,7 +375,7 @@ public Map<String, Object> runBackwardChainingExample() throws Exception {
             DroolsLog.log(padding + "📂 Proving " + node + " via subgoals: " + prerequisites);
 
             for (Object prereqObj : prerequisites) {
-                recordReasoningTrace(ksession, m, (String) prereqObj, indent + 1);
+                recordReasoningTrace(ksession, m, (String) prereqObj, indent + 1, threshold);
             }
         }
 
@@ -384,16 +385,16 @@ public Map<String, Object> runBackwardChainingExample() throws Exception {
     }
 
     // This helper must mirror the thresholds you have in your DRL Base Cases
-    private String getBaseConditionReason(Machine m, String hypothesis) {
+    private String getBaseConditionReason(Machine m, String hypothesis, double threshold) {
         switch (hypothesis) {
             case "AskableVibration":
-                return (m.getVibration() > 7.1) ? "Vibration (" + m.getVibration() + ") > 7.1" : null;
+                return (m.getVibration() > threshold) ? "Vibration (" + m.getVibration() + ") > " + threshold : null;
             case "AskableTemperature":
-                return (m.getTemperature() > 85) ? "Temperature (" + m.getTemperature() + ") > 85" : null;
+                return (m.getTemperature() > threshold) ? "Temperature (" + m.getTemperature() + ") > " + threshold : null;
             case "AskableCurrent":
-                return (m.getCurrentPercentOfRated() > 100) ? "Current (" + m.getCurrentPercentOfRated() + "%) > 100%" : null;
+                return (m.getCurrentPercentOfRated() > threshold) ? "Current (" + m.getCurrentPercentOfRated() + "%) > " + threshold + "%" : null;
             case "AskableOverload":
-                return (m.getOverloadTripCount() >= 1) ? "Trip Count (" + m.getOverloadTripCount() + ") >= 1" : null;
+                return (m.getOverloadTripCount() >= threshold) ? "Trip Count (" + m.getOverloadTripCount() + ") >= " + threshold : null;
             default:
                 return null; // Not a base case
         }

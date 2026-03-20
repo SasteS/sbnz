@@ -18,14 +18,14 @@ public class BackwardRecursiveController {
         this.backwardChainingService = backwardChainingService;
     }
 
-    @PostMapping("/prove-machine-hypothesis")
-    public Map<String, Object> proveHypothesis(@RequestBody HypothesisRequsetDTO request) throws Exception {
-        return backwardChainingService.runBackwardChainingForOne(request.getMachineId(), request.getHypothesis());
-    }
+//    @PostMapping("/prove-machine-hypothesis")
+//    public Map<String, Object> proveHypothesis(@RequestBody HypothesisRequsetDTO request) throws Exception {
+//        return backwardChainingService.runBackwardChainingForOne(request.getMachineId(), request.getHypothesis(), );
+//    }
 
-    @PostMapping("/run-example")
-    public Map<String, Object> runExample() throws Exception {
-        return backwardChainingService.runBackwardChainingExample();
-    }
+//    @PostMapping("/run-example")
+//    public Map<String, Object> runExample() throws Exception {
+//        return backwardChainingService.runBackwardChainingExample();
+//    }
 
 }
