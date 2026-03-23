@@ -1,14 +1,20 @@
 package rules.forward
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
+import com.ftn.sbnz.model.models.IDiagnosticService
+
+global IDiagnosticService backwardService;
 
 rule "Current > 120% and overloadOccurred"
 no-loop true
 when
-    $m : Machine( currentPercentOfRated > 120, status != MachineStatus.CRITICAL )
+    $m : Machine( currentPercentOfRated > 120, overloadTripCount >= 1, status != MachineStatus.CRITICAL )
 then
-    $m.setStatus(MachineStatus.CRITICAL);
-    $m.addRecommendation("Električno preopterećenje – hitno isključi mašinu!");
-    update($m);
+    modify($m) {
+        setStatus(MachineStatus.CRITICAL),
+        addRecommendation("Električno preopterećenje – hitno isključi mašinu!")
+    }
     System.out.println("Current > 120% and overloadOccurred, " + $m.getName());
+    // Triggering ElectricalOverload diagnosis
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "ElectricalOverload", 120.0);
 end

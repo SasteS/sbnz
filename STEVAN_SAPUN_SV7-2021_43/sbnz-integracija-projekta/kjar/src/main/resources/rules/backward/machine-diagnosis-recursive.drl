@@ -67,7 +67,7 @@ query proveHypothesis( String $hypothesis, String $machineId )
         (
             // --- BASE CASES ---
             ( eval($hypothesis.equals("AskableVibration")) and Machine(this == $m, vibration > 7.1) ) or
-            ( eval($hypothesis.equals("AskableTemperature")) and Machine(this == $m, temperature > 85) ) or
+            ( eval($hypothesis.equals("AskableTemperature")) and Machine(this == $m, temperature > 80) ) or // 85
             ( eval($hypothesis.equals("AskableCurrent")) and Machine(this == $m, currentPercentOfRated > 100) ) or
             ( eval($hypothesis.equals("AskableOverload")) and Machine(this == $m, overloadTripCount >= 1) )
         )

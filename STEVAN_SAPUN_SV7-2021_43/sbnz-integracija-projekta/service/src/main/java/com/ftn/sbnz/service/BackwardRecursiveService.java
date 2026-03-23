@@ -388,15 +388,27 @@ public class BackwardRecursiveService implements IDiagnosticService {
     private String getBaseConditionReason(Machine m, String hypothesis, double threshold) {
         switch (hypothesis) {
             case "AskableVibration":
-                return (m.getVibration() > threshold) ? "Vibration (" + m.getVibration() + ") > " + threshold : null;
+                // If the rule fired because of vibration, 'threshold' is the vibration limit
+                return (m.getVibration() > threshold) ?
+                        String.format("Vibration (%.2f) > limit (%.2f)", m.getVibration(), threshold) : null;
+
             case "AskableTemperature":
-                return (m.getTemperature() > threshold) ? "Temperature (" + m.getTemperature() + ") > " + threshold : null;
+                // If the rule fired because of temp, 'threshold' is the temp limit
+                return (m.getTemperature() > threshold) ?
+                        String.format("Temperature (%.2f) > limit (%.2f)", m.getTemperature(), threshold) : null;
+
             case "AskableCurrent":
-                return (m.getCurrentPercentOfRated() > threshold) ? "Current (" + m.getCurrentPercentOfRated() + "%) > " + threshold + "%" : null;
+                // 'threshold' here is 120.0
+                return (m.getCurrentPercentOfRated() > threshold) ?
+                        String.format("Current load (%.2f%%) > limit (%.2f%%)", m.getCurrentPercentOfRated(), threshold) : null;
+
             case "AskableOverload":
-                return (m.getOverloadTripCount() >= threshold) ? "Trip Count (" + m.getOverloadTripCount() + ") >= " + threshold : null;
+                // Overload logic usually looks at the count
+                return (m.getOverloadTripCount() >= 1) ?
+                        "Machine has recent overload trip history" : null;
+
             default:
-                return null; // Not a base case
+                return null;
         }
     }
 }

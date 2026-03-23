@@ -2,16 +2,21 @@ package rules.forward
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.enums.MachineStatus
 import com.ftn.sbnz.model.enums.OperationContext
+import com.ftn.sbnz.model.models.IDiagnosticService
+
+global IDiagnosticService backwardService;
 
 rule "PostMaintenance - rising temperature"
 no-loop true
 when
     $m : Machine( context == OperationContext.POST_MAINTENANCE, temperature > 80 && temperature < 90 )
 then
-    $m.setStatus(MachineStatus.SUSPICIOUS);
+    modify($m) {
+        setStatus(MachineStatus.SUSPICIOUS),
+        addRecommendation("Temperatura raste posle servisa – proveri servisni zahvat.")
+    }
     System.out.println("Temperatura raste posle servisa za " + $m.getName());
-    $m.addRecommendation("Temperatura raste posle servisa – proveri servisni zahvat.");
-    update($m);
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat", 80.0);
 end
 
 rule "HighLoad - increased vibration"
@@ -19,19 +24,25 @@ no-loop true
 when
     $m : Machine( context == OperationContext.HIGH_LOAD, vibration > 8 )
 then
-    $m.setStatus(MachineStatus.CRITICAL);
-    $m.addRecommendation("Vibracije pri visokom opterećenju – proveri balans.");
-    update($m);
+    modify($m) {
+        setStatus(MachineStatus.CRITICAL),
+        addRecommendation("Vibracije pri visokom opterećenju – proveri balans.")
+    }
+    System.out.println("Povisene vibracije za " + $m.getName() + " u HighLoad kontekstu");
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "BearingFault", 8.0);
 end
 
 rule "Idle - abnormal temperature"
 no-loop true
 when
-    $m : Machine( context == OperationContext.IDLE, temperature > 60 )
+    $m : Machine( context == OperationContext.IDLE, temperature > 80 )
 then
-    $m.setStatus(MachineStatus.RISKY);
-    $m.addRecommendation("Temperatura previsoka u praznom hodu – proveri ventilaciju.");
-    update($m);
+    modify($m){
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("Temperatura previsoka u praznom hodu – proveri ventilaciju.")
+    }
+    System.out.println("Povisenje temperature " + $m.getName() + " u Idle kontekstu");
+    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat", 80.0);
 end
 
 // --- If vibration normalizes ---
@@ -40,8 +51,9 @@ no-loop true
 when
     $m : Machine( context == OperationContext.POST_MAINTENANCE, vibration <= 7, temperature <= 80, currentPercentOfRated <= 100 , status != MachineStatus.NORMAL )
 then
-    $m.setStatus(MachineStatus.NORMAL);
-    $m.resetRecommendations();
-    update($m);
+    modify($m){
+        setStatus(MachineStatus.NORMAL),
+        resetRecommendations()
+    }
     System.out.println("Rule fired: PostMaintenance normalization → " + $m.getName());
 end

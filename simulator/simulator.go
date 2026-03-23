@@ -46,7 +46,7 @@ func main() {
 
 	// 3. Start simulating multiple machines
 	// We use different IDs that should exist in your Database
-	go simulateMachine(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A", 82.0, 5.0)
+	go simulateMachine(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A", 84.0, 5.0)
 	// Change ID later to actually be one of the machines in the DB
 	go simulateMachine(ch, qTelemetry.Name, "M2", "Compressor B", 60.0, 8.5) // This one starts with high vibration
 
@@ -117,7 +117,7 @@ func simulateMachine(ch *amqp.Channel, queueName string, id string, name string,
 			CurrentPercentOfRated: 95.0,
 			Rpm:                   1500.0,
 			Status:                "NORMAL", // Backend logic will change this
-			Context:               "NORMAL",
+			Context:               "NORMAL", //POST_MAINTENANCE
 			LastUpdated:           time.Now().UTC().Format(time.RFC3339),
 			OverloadTripCount:     0,
 			Recommendations:       []string{},
