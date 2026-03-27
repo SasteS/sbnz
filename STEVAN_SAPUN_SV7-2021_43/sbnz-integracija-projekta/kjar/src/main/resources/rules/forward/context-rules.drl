@@ -16,7 +16,7 @@ then
         addRecommendation("Temperatura raste posle servisa – proveri servisni zahvat.")
     }
     System.out.println("Temperatura raste posle servisa za " + $m.getName());
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat", 80.0);
+    backwardService.triggerAutomaticDiagnosis($m, "Overheat", 80.0);
 end
 
 rule "HighLoad - increased vibration"
@@ -29,7 +29,7 @@ then
         addRecommendation("Vibracije pri visokom opterećenju – proveri balans.")
     }
     System.out.println("Povisene vibracije za " + $m.getName() + " u HighLoad kontekstu");
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "BearingFault", 8.0);
+    backwardService.triggerAutomaticDiagnosis($m, "BearingFault", 8.0);
 end
 
 rule "Idle - abnormal temperature"
@@ -42,7 +42,7 @@ then
         addRecommendation("Temperatura previsoka u praznom hodu – proveri ventilaciju.")
     }
     System.out.println("Povisenje temperature " + $m.getName() + " u Idle kontekstu");
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "Overheat", 80.0);
+    backwardService.triggerAutomaticDiagnosis($m, "Overheat", 80.0);
 end
 
 // --- If vibration normalizes ---

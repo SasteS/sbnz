@@ -18,7 +18,7 @@ then
     }
     System.out.println("Rule fired: Slightly high vibration → Suspicious for " + $m.getName());
     // Tringgering imbalance diagnostics
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "Imbalance", 7.1);
+    backwardService.triggerAutomaticDiagnosis($m, "Imbalance", 7.1);
 end
 
 // --- Very high vibration ---
@@ -34,5 +34,5 @@ then
     System.out.println("Rule fired: High vibration → Risky for " + $m.getName());
     // Triggering bearing fault diagnostics
     // Maybe change to Bearing Load
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "Imbalance", 10.0);
+    backwardService.triggerAutomaticDiagnosis($m, "Imbalance", 10.0);
 end

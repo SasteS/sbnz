@@ -28,9 +28,44 @@ public class BackwardRecursiveService implements IDiagnosticService {
     private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
-    public BackwardRecursiveService(KieContainer kieContainer, MachineRepository machineRepository) {
+    public BackwardRecursiveService(KieContainer kieContainer, MachineRepository machineRepository, SimpMessagingTemplate messagingTemplate) {
         this.kieContainer = kieContainer;
         this.machineRepository = machineRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    @Override
+    public void triggerAutomaticDiagnosis(Machine machine, String hypothesis, double threshold) {
+        try {
+            // We run the diagnosis and get the result map
+            Map<String, Object> result = runBackwardChainingForOne(machine, hypothesis, threshold);
+            // Push the result to the UI
+            messagingTemplate.convertAndSend("/topic/diagnosis", result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void triggerSimpleAlert(Machine machine, String alertTitle, String recommendation) {
+        List<String> logs = new ArrayList<>();
+        logs.add(">>> CEP ENGINE ALERT <<<");
+        logs.add("Temporal pattern detected: " + alertTitle);
+        logs.add("Recommendation: " + recommendation);
+
+        BackwardResultDTO dto = new BackwardResultDTO(
+                machine.getName(),
+                alertTitle,
+                true, // CEP firing is the proof
+                machine.getStatus().toString(),
+                recommendation
+        );
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("results", List.of(dto));
+        response.put("logs", logs);
+
+        messagingTemplate.convertAndSend("/topic/diagnosis", response);
     }
 
 //    public Map<String, Object> runBackwardChainingForOne(String machineId, String hypothesis) throws Exception {
@@ -77,44 +112,36 @@ public class BackwardRecursiveService implements IDiagnosticService {
 //        return response;
 //    }
 
-    public Map<String, Object> runBackwardChainingForOne(String machineId, String hypothesis, double threshold) throws Exception {
-        DroolsLog.clear();
+    public Map<String, Object> runBackwardChainingForOne(Machine machine, String hypothesis, double threshold) throws Exception {
+        // 1. Thread-local log list
+        List<String> currentLogs = new ArrayList<>();
         KieSession ksession = kieContainer.newKieSession("bwKsession");
 
-        // 1. Fetch and Insert Data
-        Machine machine = machineRepository.findById(machineId)
-                .orElseThrow(() -> new RuntimeException("Machine not found: " + machineId));
         ksession.insert(machine);
 
-        // 2. Initialize Dependency Graph
+        // 2. Initialize Dependency Graph (Rule in DRL)
         int fired = ksession.fireAllRules();
-        DroolsLog.log("=== Dependency Graph Initialized (" + fired + " rules fired) ===");
+        currentLogs.add("=== Dependency Graph Initialized (" + fired + " rules fired) ===");
 
         // 3. Run Query
-        // Using the 2-parameter version: (String hypothesis, String machineId)
         QueryResults results = ksession.getQueryResults("proveHypothesis", hypothesis, machine.getId());
         boolean proven = results.size() > 0;
 
-        // 4. Generate the Reasoning Trace (The "How" and "Why")
+        // 4. Generate the Reasoning Trace using the LOCAL log list
         if (proven) {
-            DroolsLog.log("--- REASONING PATH FOR " + hypothesis + " ---");
-            recordReasoningTrace(ksession, machine, hypothesis, 0, threshold);
-            DroolsLog.log("-------------------------------------------");
+            currentLogs.add("--- REASONING PATH FOR " + hypothesis + " ---");
+            // FIXED: Passing 'currentLogs' to the correct method
+            recordReasoningTrace(ksession, machine, hypothesis, 0, threshold, currentLogs);
+            currentLogs.add("-------------------------------------------");
         } else {
-            DroolsLog.log("⚠️ Hypothesis " + hypothesis + " could not be proven for " + machine.getName());
+            currentLogs.add("⚠️ Hypothesis " + hypothesis + " could not be proven for " + machine.getName());
         }
 
-        // 5. Fire rules again
-        // This executes the "proven -> escalate" rules that update status and recommendations
-        int firedAfterQueries = ksession.fireAllRules();
-        DroolsLog.log("=== Reaction rules fired: " + firedAfterQueries + " ===");
+        // 5. Fire reaction rules (escalation)
+        ksession.fireAllRules();
 
-        // 6. Construct the DTO
-        // We get these values NOW because fireAllRules() just updated them
-        String recs = machine.getRecommendations().isEmpty()
-                ? ""
-                : String.join(", ", machine.getRecommendations());
-
+        // 6. Build DTO
+        String recs = machine.getRecommendations().isEmpty() ? "" : String.join(", ", machine.getRecommendations());
         BackwardResultDTO dto = new BackwardResultDTO(
                 machine.getName(),
                 hypothesis,
@@ -123,31 +150,13 @@ public class BackwardRecursiveService implements IDiagnosticService {
                 recs
         );
 
-        // 7. Final Response
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("results", List.of(dto));
-        response.put("logs", DroolsLog.getLogs());
-        response.put("machine", machine); // Optional: return the full object
+        response.put("logs", currentLogs); // Return the local logs
+        response.put("machine", machine);
 
         ksession.dispose();
         return response;
-    }
-
-    @Override
-    public void triggerAutomaticDiagnosis(String machineId, String hypothesis, double threshold) throws Exception {
-        try {
-            // 1. Run the logic you already wrote
-            Map<String, Object> result = runBackwardChainingForOne(machineId, hypothesis, threshold);
-
-            // 2. PUSH to Frontend via WebSocket!
-            // Everyone subscribed to /topic/diagnosis will see this instantly
-            messagingTemplate.convertAndSend("/topic/diagnosis", result);
-            System.out.println("Diagnosis: " + result.get("results"));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            messagingTemplate.convertAndSend("/topic/errors", "Diagnosis failed: " + e.getMessage());
-        }
     }
 
 
@@ -350,37 +359,37 @@ public class BackwardRecursiveService implements IDiagnosticService {
 
 
 
-    private void recordReasoningTrace(KieSession ksession, Machine m, String node, int indent, double threshold) throws Exception {
+    private void recordReasoningTrace(KieSession ksession, Machine m, String node, int indent, double threshold, List<String> logs) throws Exception {
         String padding = "  ".repeat(indent);
         FactType depType = ksession.getKieBase().getFactType("rules.backward", "HypothesisDependency");
 
-        // 1. Check if this is a Base Case (Leaf Node)
+        // 1. Check if Base Case
         String baseReason = getBaseConditionReason(m, node, threshold);
         if (baseReason != null) {
-            DroolsLog.log(padding + "✅ " + node + " is TRUE because: " + baseReason);
+            logs.add(padding + "✅ " + node + " is TRUE because: " + baseReason);
             return;
         }
 
-        // 2. If not a base case, check its prerequisites
+        // 2. Look for dependencies
         boolean foundDep = false;
         for (Object fact : ksession.getObjects()) {
-            if (!depType.getFactClass().isInstance(fact)) continue;
+            // Using class name check to avoid ClassLoader/FactType issues in multi-module setups
+            if (!fact.getClass().getSimpleName().equals("HypothesisDependency")) continue;
 
             String conclusion = (String) depType.get(fact, "conclusion");
             if (!conclusion.equals(node)) continue;
 
             foundDep = true;
             List<?> prerequisites = (List<?>) depType.get(fact, "prerequisites");
-
-            DroolsLog.log(padding + "📂 Proving " + node + " via subgoals: " + prerequisites);
+            logs.add(padding + "📂 Proving " + node + " via subgoals: " + prerequisites);
 
             for (Object prereqObj : prerequisites) {
-                recordReasoningTrace(ksession, m, (String) prereqObj, indent + 1, threshold);
+                recordReasoningTrace(ksession, m, (String) prereqObj, indent + 1, threshold, logs);
             }
         }
 
         if (!foundDep) {
-            DroolsLog.log(padding + "❌ " + node + " could not be linked to any dependencies.");
+            logs.add(padding + "❌ " + node + " has no further dependencies in the graph.");
         }
     }
 

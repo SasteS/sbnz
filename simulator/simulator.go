@@ -10,7 +10,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// Machine matches your Java Entity structure
+// --- MODELS ---
+
 type Machine struct {
 	ID                    string   `json:"id"`
 	Name                  string   `json:"name"`
@@ -18,20 +19,102 @@ type Machine struct {
 	Temperature           float64  `json:"temperature"`
 	CurrentPercentOfRated float64  `json:"currentPercentOfRated"`
 	Rpm                   float64  `json:"rpm"`
-	Status                string   `json:"status"` // Enum as String: NORMAL, RISKY, CRITICAL
+	Status                string   `json:"status"`
 	Context               string   `json:"context"`
-	LastUpdated           string   `json:"lastUpdated"` // ISO8601 string
+	LastUpdated           string   `json:"lastUpdated"`
 	OverloadTripCount     int      `json:"overloadTripCount"`
 	Recommendations       []string `json:"recommendations"`
 }
 
-// UserCommand represents the manual action sent from the Frontend/Backend
 type UserCommand struct {
-	Action string `json:"action"` // e.g., "ACTIVATE_COOLING", "STOP", "RESET"
+	Action string `json:"action"`
 }
 
+// --- CORE HELPERS ---
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
+}
+
+// sendTelemetry handles the RabbitMQ publishing and timestamping
+func sendTelemetry(ch *amqp.Channel, qName string, m Machine) {
+	m.LastUpdated = time.Now().UTC().Format(time.RFC3339)
+	body, _ := json.Marshal(m)
+	ch.PublishWithContext(context.Background(), "", qName, false, false, amqp.Publishing{
+		ContentType: "application/json",
+		Body:        body,
+	})
+}
+
+// --- SCENARIO 1: The "Standard" Machine (Random noise) ---
+func simulateNormalOperation(ch *amqp.Channel, qName string, id string, name string) {
+	for {
+		m := Machine{
+			ID: id, Name: name,
+			Temperature:           70.0 + rand.Float64()*5,
+			Vibration:             4.0 + rand.Float64(),
+			CurrentPercentOfRated: 90.0,
+			Status:                "NORMAL", Context: "NORMAL",
+		}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// --- SCENARIO 2: Heating Chain (CEP Sustained -> Forward Critical) ---
+// Phase 1: Normal (75C)
+// Phase 2: CEP Zone (82C) - Triggers "Temperature > 80 for 2 mins"
+// Phase 3: Forward Zone (91C) - Triggers "Temperature > 90"
+func simulateHeatingChain(ch *amqp.Channel, qName string, id string, name string) {
+	log.Printf("[%s] SCENARIO START: Chained Heating Failure", name)
+	for i := 0; ; i++ {
+		temp := 75.0
+		if i >= 5 && i < 15 {
+			temp = 82.0 // CEP should fire
+			if i == 5 {
+				log.Printf("[%s] >>> Entered CEP Warning Zone (82.0C)", name)
+			}
+		} else if i >= 15 {
+			temp = 91.0 // Forward should fire
+			if i == 15 {
+				log.Printf("[%s] >>> Entered FORWARD Critical Zone (91.0C)", name)
+			}
+		}
+
+		m := Machine{ID: id, Name: name, Temperature: temp, Vibration: 5.0, Status: "NORMAL", Context: "NORMAL", CurrentPercentOfRated: 95.0}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// --- SCENARIO 3: Vibration Jump (CEP Jump -> Forward Limit) ---
+func simulateVibrationEscalation(ch *amqp.Channel, qName string, id string, name string) {
+	log.Printf("[%s] SCENARIO START: Vibration Escalation", name)
+	for i := 0; ; i++ {
+		vib := 4.0
+		if i >= 5 && i < 10 {
+			vib = 6.0 // 50% jump (Triggers CEP Jump Rule)
+			if i == 5 {
+				log.Printf("[%s] >>> Triggering CEP Jump (6.0)", name)
+			}
+		} else if i >= 10 {
+			vib = 8.5 // Crosses Forward threshold (7.1)
+			if i == 10 {
+				log.Printf("[%s] >>> Triggering FORWARD Limit (8.5)", name)
+			}
+		}
+
+		m := Machine{ID: id, Name: name, Temperature: 70.0, Vibration: vib, Status: "NORMAL", Context: "NORMAL", CurrentPercentOfRated: 95.0}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// --- MAIN ENTRY POINT ---
+
 func main() {
-	// 1. Connect to RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
@@ -40,102 +123,17 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	// 2. Declare the Telemetry Queue (where machines send data)
-	qTelemetry, err := ch.QueueDeclare("machine_telemetry", true, false, false, false, nil)
-	failOnError(err, "Failed to declare telemetry queue")
+	qTelemetry, _ := ch.QueueDeclare("machine_telemetry", true, false, false, false, nil)
 
-	// 3. Start simulating multiple machines
-	// We use different IDs that should exist in your Database
-	go simulateMachine(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A", 84.0, 5.0)
-	// Change ID later to actually be one of the machines in the DB
-	go simulateMachine(ch, qTelemetry.Name, "M2", "Compressor B", 60.0, 8.5) // This one starts with high vibration
+	// --- LAUNCH SCENARIOS ---
 
-	// Keep the main thread alive
-	log.Printf(" [*] Simulation started. Sending telemetry to RabbitMQ...")
+	// Machine 1: Test the Heating Logic Chain
+	//go simulateNormalOperation(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
+	go simulateHeatingChain(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
+
+	// Machine 2: Test the Vibration Logic Chain (Change ID to match your DB)
+	// go simulateVibrationEscalation(ch, qTelemetry.Name, "M2-UUID", "Compressor B")
+
+	log.Printf(" [*] Simulator Engine running scenarios. Press CTRL+C to stop.")
 	select {}
-}
-
-func simulateMachine(ch *amqp.Channel, queueName string, id string, name string, startTemp float64, startVib float64) {
-	// Internal state of the simulation
-	currentTemp := startTemp
-	currentVib := startVib
-	isCoolingActive := false
-	isStopped := false
-
-	// --- COMMAND LISTENER ---
-	// Create a unique command queue for THIS specific machine
-	cmdQueueName := "commands." + id
-	cmdQ, _ := ch.QueueDeclare(cmdQueueName, false, false, false, false, nil)
-	msgs, _ := ch.Consume(cmdQ.Name, "", true, false, false, false, nil)
-
-	go func() {
-		for d := range msgs {
-			var cmd UserCommand
-			json.Unmarshal(d.Body, &cmd)
-			log.Printf("[%s] RECEIVED COMMAND: %s", name, cmd.Action)
-
-			switch cmd.Action {
-			case "ACTIVATE_COOLING":
-				isCoolingActive = true
-			case "STOP":
-				isStopped = true
-			case "RESET":
-				currentTemp = startTemp
-				isCoolingActive = false
-				isStopped = false
-			}
-		}
-	}()
-
-	// --- TELEMETRY LOOP ---
-	for {
-		if !isStopped {
-			// Simulating physics logic
-			if isCoolingActive {
-				currentTemp -= 1.5 // Cooling helps drop temperature
-				if currentTemp < 50 {
-					isCoolingActive = false
-				} // Stop cooling at 50
-			} else {
-				currentTemp += rand.Float64() * 1.2 // Gradually warms up
-			}
-
-			// Add some random noise to vibration
-			currentVib += (rand.Float64() - 0.5)
-		} else {
-			// Machine is stopped, values go to zero
-			currentTemp = currentTemp * 0.95
-			currentVib = 0
-		}
-
-		// Create the DTO
-		m := Machine{
-			ID:                    id,
-			Name:                  name,
-			Temperature:           currentTemp,
-			Vibration:             currentVib,
-			CurrentPercentOfRated: 95.0,
-			Rpm:                   1500.0,
-			Status:                "NORMAL", // Backend logic will change this
-			Context:               "NORMAL", //POST_MAINTENANCE
-			LastUpdated:           time.Now().UTC().Format(time.RFC3339),
-			OverloadTripCount:     0,
-			Recommendations:       []string{},
-		}
-
-		// Send to RabbitMQ
-		body, _ := json.Marshal(m)
-		ch.PublishWithContext(context.Background(), "", queueName, false, false, amqp.Publishing{
-			ContentType: "application/json",
-			Body:        body,
-		})
-
-		time.Sleep(3 * time.Second) // Send every 3 seconds
-	}
-}
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
 }

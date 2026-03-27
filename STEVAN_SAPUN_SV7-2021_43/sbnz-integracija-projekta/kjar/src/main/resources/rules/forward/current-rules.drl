@@ -16,5 +16,5 @@ then
     }
     System.out.println("Current > 120% and overloadOccurred, " + $m.getName());
     // Triggering ElectricalOverload diagnosis
-    backwardService.triggerAutomaticDiagnosis($m.getId(), "ElectricalOverload", 120.0);
+    backwardService.triggerAutomaticDiagnosis($m, "ElectricalOverload", 120.0);
 end

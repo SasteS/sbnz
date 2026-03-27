@@ -18,6 +18,9 @@ public class TelemetryConsumer {
     private BackwardRecursiveService backwardRecursiveService;
 
     @Autowired
+    private CepSessionManager cepSessionManager;
+
+    @Autowired
     private KieContainer kieContainer;
 
     // ADD THIS INJECTION
@@ -31,8 +34,11 @@ public class TelemetryConsumer {
             // 1. Update existing machine
             existingMachine.setTemperature(incomingMachine.getTemperature());
             existingMachine.setVibration(incomingMachine.getVibration());
-            existingMachine.setLastUpdated(incomingMachine.getLastUpdated());
+            existingMachine.setCurrentPercentOfRated(incomingMachine.getCurrentPercentOfRated());
             existingMachine.setContext(incomingMachine.getContext());
+            existingMachine.setLastUpdated(incomingMachine.getLastUpdated());
+
+            cepSessionManager.processTelemetry(existingMachine);
 
             // 2. Run Forward Logic
             KieSession ksession = kieContainer.newKieSession("k-session");

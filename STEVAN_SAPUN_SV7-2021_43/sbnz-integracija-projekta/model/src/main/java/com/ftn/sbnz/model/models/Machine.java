@@ -41,7 +41,7 @@ public class Machine implements Serializable {
     private Instant lastUpdated;
     private int overloadTripCount = 0;
 
-    @ElementCollection//(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> recommendations = new ArrayList<>();
 
     public Machine() {}

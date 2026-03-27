@@ -6,6 +6,14 @@ import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.events.TemperatureReading
 import com.ftn.sbnz.model.events.VibrationReading
 import com.ftn.sbnz.model.enums.MachineStatus
+import com.ftn.sbnz.model.models.IDiagnosticService
+
+global IDiagnosticService backwardService;
+
+declare AlertLock
+    machineId : String
+    alertType : String
+end
 
 // Declare events for CEP
 //declare TemperatureReading
@@ -85,20 +93,22 @@ import com.ftn.sbnz.model.enums.MachineStatus
 import com.ftn.sbnz.model.events.CurrentReading
 
 // --- Rapid vibration increase (relative change) ---
-rule "Vibration jump 20% in 1 minute"
+rule "Vibration jump 20% in 30 seconds"
 no-loop true
 when
-    $m : Machine($id : id, status in (MachineStatus.NORMAL))
-    $v1 : VibrationReading(machineId == $id) over window:time(1m)
-    $v2 : VibrationReading(machineId == $id, this after[0s,1m] $v1) over window:time(1m)
+    $m : Machine($id : id, status == MachineStatus.NORMAL)
+    $v2 : VibrationReading(machineId == $id)
+    not VibrationReading(machineId == $id, this after $v2)
+    $v1 : VibrationReading(machineId == $id, this before $v2)
+    not VibrationReading(machineId == $id, this before $v2, this after $v1)
     eval(($v2.value - $v1.value) / $v1.value > 0.2)
 then
-    if ($m.getStatus() == MachineStatus.NORMAL) {
-        $m.setStatus(MachineStatus.SUSPICIOUS);
-        $m.addRecommendation("Nagla promena vibracija – proveri rotor i pričvršćenja.");
-        update($m);
-        System.out.println("CEP Rule fired: Rapid vibration increase for " + $m.getName());
+    modify($m) {
+        setStatus(MachineStatus.SUSPICIOUS),
+        addRecommendation("Nagla promena vibracija – proveri rotor i pričvršćenja.")
     }
+    System.out.println("CEP Rule fired: Rapid vibration increase for " + $m.getName());
+    backwardService.triggerSimpleAlert($m, "CEP: Vibration Jump", "Nagla promena vibracija (>20%) detektovana u strimu.");
 end
 
 // --- Prolonged high vibration (5 min spike) ---
@@ -121,22 +131,29 @@ then
 end
 
 // --- Prolonged heating (30 min > 80°C) ---
-rule "Temperature > 80°C for 30 minutes"
+rule "Temperature > 80°C for 2 minutes"
 no-loop true
 when
-    $m : Machine($id : id, status != MachineStatus.CRITICAL)
+    $m : Machine($id : id, status == MachineStatus.NORMAL)
+    not AlertLock(machineId == $id, alertType == "SUSTAINED_HEAT")
     accumulate(
-        $t : TemperatureReading(machineId == $id, value > 80) over window:time(30m),
+        $t : TemperatureReading(machineId == $id, value > 80) over window:time(2m),
         $count : count($t)
     )
     eval($count >= 3)
 then
-    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
-        $m.setStatus(MachineStatus.RISKY);
-        $m.addRecommendation("Temperatura visoka više od 30 min – moguće habanje ležaja.");
-        update($m);
-        System.out.println("CEP Rule fired: Prolonged heating for " + $m.getName());
+    insert(new AlertLock($id, "SUSTAINED_HEAT"));
+    modify($m) {
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("CEP: Temperatura povišena (>80) duže od 2 minuta – moguće habanje ležaja.")
     }
+
+    System.out.println("CEP Rule fired: Prolonged heating for " + $m.getName());
+
+    // 5. TRIGGER DIRECT ALERT (Path B)
+    // We use triggerSimpleAlert because the history (10 readings in a window)
+    // is the proof itself. We don't need a backward chaining logic tree here.
+    backwardService.triggerSimpleAlert($m, "CEP: Sustained Heating", "Detektovano je povišeno zagrevanje koje traje duže od 2 minuta.");
 end
 
 // --- Prolonged high current (15 min > 100% rated) ---
