@@ -188,12 +188,14 @@ func main() {
 	// --- LAUNCH SCENARIOS ---
 
 	// Machine 1: Test the Heating Logic Chain
-	//go simulateNormalOperation(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
-	//go simulateHeatingChain(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
 	go simulateNormalOperation(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
+	//go simulateHeatingChain(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
+	//go simulateVibrationEscalation(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
 
 	// Machine 2: Test the Vibration Logic Chain (Change ID to match your DB)
-	// go simulateVibrationEscalation(ch, qTelemetry.Name, "M2-UUID", "Compressor B")
+	go simulateNormalOperation(ch, qTelemetry.Name, "f3fd88c6-7fe1-476e-8198-8d6549d47f74", "Compressor A")
+	go simulateNormalOperation(ch, qTelemetry.Name, "ae3ecdc6-44b2-44ed-bc3b-f394935cdd17", "Compressor B")
+	go simulateNormalOperation(ch, qTelemetry.Name, "9bc18f85-da86-4aa2-8a73-4c0bc0e6e86a", "Compressor C")
 
 	log.Printf(" [*] Simulator Engine running scenarios. Press CTRL+C to stop.")
 	select {}

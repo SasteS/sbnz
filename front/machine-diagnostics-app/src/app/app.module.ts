@@ -31,6 +31,10 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { ReasoningDetailsDialogComponent } from './components/reasoning-details-dialog/reasoning-details-dialog.component';
 
+import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -60,7 +64,10 @@ import { ReasoningDetailsDialogComponent } from './components/reasoning-details-
     MatMenuModule,
     MatIconModule,
     MatBadgeModule,
-    MatDividerModule
+    MatDividerModule,
+    MatCardModule,
+    MatExpansionModule,
+    MatProgressBarModule
   ],
   providers: [
     provideAnimationsAsync()

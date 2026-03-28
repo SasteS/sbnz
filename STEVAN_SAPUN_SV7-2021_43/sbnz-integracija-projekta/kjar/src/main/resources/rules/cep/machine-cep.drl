@@ -243,7 +243,7 @@ when
 then
     insert(new AlertLock($id, "PM_HEAT"));
     modify($m) {
-        setStatus()
+        setStatus(MachineStatus.SUSPICIOUS),
         addRecommendation("CEP: Sumnjiv rast temperature odmah nakon servisa!")
     }
     backwardService.triggerSimpleAlert($m, "CEP: Post-Maint Warning", "Temperatura raste neuobičajeno brzo nakon servisiranja.");

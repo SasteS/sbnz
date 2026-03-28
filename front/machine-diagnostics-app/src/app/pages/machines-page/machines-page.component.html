@@ -1,40 +1,84 @@
 <div class="container">
-  <h1>Machines</h1>
+  <div class="header-row">
+    <h1>System Monitor</h1>
+    <button mat-raised-button color="primary" (click)="openDialog()">
+      <mat-icon>add</mat-icon> Register Machine
+    </button>
+  </div>
 
-  <button mat-raised-button color="primary" (click)="openDialog()">
-    Create Machine
-  </button>
+  <div class="dashboard-grid">
+    <mat-card *ngFor="let m of machines; trackBy: trackByMachineId" 
+              [ngClass]="'machine-card ' + m.status.toLowerCase()">
+      
+      <mat-card-header>
+        <div mat-card-avatar class="status-indicator">
+          <mat-icon>{{ getStatusIcon(m.status) }}</mat-icon>
+        </div>
+        <mat-card-title>{{ m.name }}</mat-card-title>
+        <mat-card-subtitle>ID: {{ m.id.substring(0,8) }}...</mat-card-subtitle>
+        
+        <!-- Red Badge if there are active recommendations from Drools -->
+        <div class="alert-badge" *ngIf="m.recommendations.length > 0" 
+             [matBadge]="m.recommendations.length" matBadgeColor="warn">
+        </div>
+      </mat-card-header>
 
-  <table mat-table [dataSource]="machines" class="mat-elevation-z8 mt-4 w-full">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef> Name </th>
-      <td mat-cell *matCellDef="let m"> {{ m.name }} </td>
-    </ng-container>
+      <mat-card-content>
+        <!-- Vitals Grid -->
+        <div class="vitals-container">
+          <div class="vital-box">
+            <span class="vital-label">Temperature</span>
+            <span class="vital-value">{{ m.temperature | number:'1.1-1' }}°C</span>
+            <mat-progress-bar mode="determinate" [value]="m.temperature" 
+                [color]="m.temperature > 85 ? 'warn' : 'primary'"></mat-progress-bar>
+          </div>
+          
+          <div class="vital-box">
+            <span class="vital-label">Vibration</span>
+            <span class="vital-value">{{ m.vibration | number:'1.1-2' }}</span>
+          </div>
+        </div>
 
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef> Status </th>
-      <td mat-cell *matCellDef="let m"> {{ m.status }} </td>
-    </ng-container>
+        <div class="load-section">
+          <span class="vital-label">
+            Current Load: {{ m.currentPercentOfRated | number:'1.2-2' }}%
+          </span>
+          <mat-progress-bar mode="determinate" 
+                [value]="(m.currentPercentOfRated / 120) * 100" 
+                [color]="m.currentPercentOfRated > 110 ? 'warn' : 'primary'">
+          </mat-progress-bar>
+        </div>
 
-    <!-- NEW: Temperature Column -->
-    <ng-container matColumnDef="temperature">
-      <th mat-header-cell *matHeaderCellDef> Temp (°C) </th>
-      <td mat-cell *matCellDef="let element"> {{element.temperature | number:'1.1-2'}} </td>
-    </ng-container>
+        <!-- Expansion Panel for Charts & Controls -->
+        <mat-expansion-panel class="details-panel" (opened)="onPanelOpen(m.id)">
+          <mat-expansion-panel-header>
+            <mat-panel-title>Control Room & History</mat-panel-title>
+          </mat-expansion-panel-header>
 
-    <!-- NEW: Vibration Column -->
-    <ng-container matColumnDef="vibration">
-      <th mat-header-cell *matHeaderCellDef> Vibration </th>
-      <td mat-cell *matCellDef="let element"> {{element.vibration | number:'1.1-2'}} </td>
-    </ng-container>
+          <div class="control-actions">
+            <h4>Remote Intervention</h4>
+            <div class="button-row">
+              <button mat-stroked-button color="primary" (click)="sendCommand(m.id, 'ACTIVATE_COOLING')">
+                <mat-icon>ac_unit</mat-icon> Cooling
+              </button>
+              <button mat-stroked-button color="warn" (click)="sendCommand(m.id, 'STOP')">
+                <mat-icon>power_settings_new</mat-icon> Stop
+              </button>
+              <button mat-flat-button class="repair-btn" (click)="sendCommand(m.id, 'RESET')">
+                <mat-icon>build</mat-icon> Repair
+              </button>
+            </div>
+          </div>
 
-    <!-- NEW: Load Column -->
-    <ng-container matColumnDef="current">
-      <th mat-header-cell *matHeaderCellDef> Load (%) </th>
-      <td mat-cell *matCellDef="let element"> {{element.currentPercentOfRated}}% </td>
-    </ng-container>
+          <div class="recommendations-list" *ngIf="m.recommendations.length > 0">
+            <h4>KBS Advice:</h4>
+            <ul>
+              <li *ngFor="let rec of m.recommendations">{{ rec }}</li>
+            </ul>
+          </div>
+        </mat-expansion-panel>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-  </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
 </div>
