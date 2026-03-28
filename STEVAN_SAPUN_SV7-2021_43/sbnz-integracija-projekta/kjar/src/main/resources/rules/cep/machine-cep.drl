@@ -97,18 +97,23 @@ rule "Vibration jump 20% in 30 seconds"
 no-loop true
 when
     $m : Machine($id : id, status == MachineStatus.NORMAL)
+    not AlertLock(machineId == $id, alertType == "VIBRATION_JUMP")
+
+    // CEP Sequence logic
     $v2 : VibrationReading(machineId == $id)
     not VibrationReading(machineId == $id, this after $v2)
     $v1 : VibrationReading(machineId == $id, this before $v2)
     not VibrationReading(machineId == $id, this before $v2, this after $v1)
-    eval(($v2.value - $v1.value) / $v1.value > 0.2)
+
+    eval(($v2.getValue() - $v1.getValue()) / $v1.getValue() > 0.2)
 then
+    insert(new AlertLock($id, "VIBRATION_JUMP"));
     modify($m) {
         setStatus(MachineStatus.SUSPICIOUS),
-        addRecommendation("Nagla promena vibracija – proveri rotor i pričvršćenja.")
+        addRecommendation("Nagla promena vibracija (skok > 20%) – proveri rotor i pričvršćenja.")
     }
     System.out.println("CEP Rule fired: Rapid vibration increase for " + $m.getName());
-    backwardService.triggerSimpleAlert($m, "CEP: Vibration Jump", "Nagla promena vibracija (>20%) detektovana u strimu.");
+    backwardService.triggerSimpleAlert($m, "CEP: Vibration Jump", "Nagla promena vibracija (>20%) detektovana u strimu – proveri rotor i pričvršćenja.");
 end
 
 // --- Prolonged high vibration (5 min spike) ---
@@ -122,12 +127,12 @@ when
     )
     eval($count >= 3)
 then
-    if ($m.getStatus() == MachineStatus.NORMAL || $m.getStatus() == MachineStatus.SUSPICIOUS) {
-        $m.setStatus(MachineStatus.RISKY);
-        $m.addRecommendation("Učestale vibracije u poslednjih 5 minuta – proveri balans i stanje ležajeva.");
-        update($m);
-        System.out.println("CEP Rule fired: Sustained high vibration for " + $m.getName());
+    insert(new AlertLock($id, "SUSTAINED_VIB"));
+    modify($m) {
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("CEP: Učestale visoke vibracije (>10) u prozoru od 5 minuta - proveri rotor i pričvršćenja.")
     }
+    backwardService.triggerSimpleAlert($m, "CEP: Sustained Vibration", "Učestale vibracije u poslednjih 5 minuta ukazuju na problem sa debalansom.");
 end
 
 // --- Prolonged heating (30 min > 80°C) ---
@@ -161,18 +166,20 @@ rule "Current > 100% for 15 minutes"
 no-loop true
 when
     $m : Machine($id : id, status != MachineStatus.CRITICAL)
+    not AlertLock(machineId == $id, alertType == "SUSTAINED_CURRENT")
+
     accumulate(
         $c : CurrentReading(machineId == $id, value > 100) over window:time(15m),
         $count : count($c)
     )
     eval($count >= 3)
 then
-    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
-        $m.setStatus(MachineStatus.RISKY);
-        $m.addRecommendation("Preopterećenje duže vreme – smanji struju.");
-        update($m);
-        System.out.println("CEP Rule fired: Prolonged high current for " + $m.getName());
+    insert(new AlertLock($id, "SUSTAINED_CURRENT"));
+    modify($m) {
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("CEP: Dugotrajno preopterećenje strujom (>100%) detektovano - smanji struju.")
     }
+    backwardService.triggerSimpleAlert($m, "CEP: Sustained Overload", "Preopterećenje traje duže od 15 minuta; smanji struju ili opterećenje.");
 end
 
 // --- Combined vibration + temperature anomaly in 10 minutes ---
@@ -180,22 +187,21 @@ rule "Vibration + Temperature anomaly 10 minutes"
 no-loop true
 when
     $m : Machine($id : id, status not in (MachineStatus.CRITICAL, MachineStatus.RISKY))
-    $vCount : Number() from accumulate(
-        $v : VibrationReading(machineId == $id, value > 7.1) over window:time(10m),
-        count($v)
+    not AlertLock(machineId == $id, alertType == "COMBINED_ANOMALY")
+
+    $vCount : Number(intValue >= 1) from accumulate(
+        VibrationReading(machineId == $id, value > 7.1) over window:time(10m), count()
     )
-    $tCount : Number() from accumulate(
-        $t : TemperatureReading(machineId == $id, value > 85) over window:time(10m),
-        count($t)
+    $tCount : Number(intValue >= 1) from accumulate(
+        TemperatureReading(machineId == $id, value > 85) over window:time(10m), count()
     )
-    eval($vCount >= 1 && $tCount >= 1)
 then
-    if ($m.getStatus() != MachineStatus.CRITICAL && $m.getStatus() != MachineStatus.RISKY) {
-        $m.setStatus(MachineStatus.RISKY);
-        $m.addRecommendation("Kombinacija povišene temperature i vibracija u poslednjih 10 minuta – mogući problem sa ležajevima ili podmazivanjem.");
-        update($m);
-        System.out.println("CEP Rule fired: Combined vibration + temperature anomaly for " + $m.getName());
+    insert(new AlertLock($id, "COMBINED_ANOMALY"));
+    modify($m) {
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("CEP: Kombinovana anomalija temperature i vibracija (10m prozor) – mogući problem sa ležajevima.")
     }
+    backwardService.triggerSimpleAlert($m, "CEP: Multi-Sensor Anomaly", "Kombinacija povišene temperature i vibracija – mogući problem sa ležajevima.");
 end
 
 // IMPLEMENT LATER
@@ -226,16 +232,21 @@ rule "Post-maintenance temperature rise"
 no-loop true
 when
     $m : Machine($id : id)
-    ContextReading(machineId == $id, context == "PostMaintenance") over window:time(1h)
+    not AlertLock(machineId == $id, alertType == "PM_HEAT")
+
+    ContextReading(machineId == $id, context == "POST_MAINTENANCE") over window:time(1h)
     accumulate(
         $t : TemperatureReading(machineId == $id, value > 80) over window:time(30m),
         $count : count($t)
     )
     eval($count >= 3)
 then
-    $m.addRecommendation("Temperatura raste nakon servisa – moguće loša popravka, zakaži inspekciju.");
-    update($m);
-    System.out.println("CEP Context Rule fired: Post-maintenance heating for " + $m.getName());
+    insert(new AlertLock($id, "PM_HEAT"));
+    modify($m) {
+        setStatus()
+        addRecommendation("CEP: Sumnjiv rast temperature odmah nakon servisa!")
+    }
+    backwardService.triggerSimpleAlert($m, "CEP: Post-Maint Warning", "Temperatura raste neuobičajeno brzo nakon servisiranja.");
 end
 
 
@@ -244,19 +255,21 @@ rule "High load vibration anomaly"
 no-loop true
 when
     $m : Machine($id : id, status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS))
-    ContextReading(machineId == $id, context == "HighLoad") over window:time(10m)
+    not AlertLock(machineId == $id, alertType == "HIGH_LOAD_VIB")
+
+    ContextReading(machineId == $id, context == "HIGH_LOAD") over window:time(10m)
     accumulate(
         $v : VibrationReading(machineId == $id, value > 8.0) over window:time(5m),
         $count : count($v)
     )
     eval($count >= 3)
 then
-    if ($m.getStatus() == MachineStatus.NORMAL || $m.getStatus() == MachineStatus.SUSPICIOUS) {
-        $m.setStatus(MachineStatus.SUSPICIOUS);
-        $m.addRecommendation("Visoke vibracije pri velikom opterećenju – proveri balans rotora.");
-        update($m);
-        System.out.println("CEP Context Rule fired: High vibration under load for " + $m.getName());
+    insert(new AlertLock($id, "HIGH_LOAD_VIB"));
+    modify($m) {
+        setStatus(MachineStatus.SUSPICIOUS),
+        addRecommendation("CEP: Visoke vibracije pri velikom opterećenju.")
     }
+    backwardService.triggerSimpleAlert($m, "CEP: Load Warning", "Povišene vibracije detektovane tokom režima visokog opterećenja.");
 end
 
 
@@ -265,17 +278,27 @@ rule "Idle machine with high temperature"
 no-loop true
 when
     $m : Machine($id : id, status != MachineStatus.CRITICAL)
-    ContextReading(machineId == $id, context == "Idle") over window:time(30m)
+    not AlertLock(machineId == $id, alertType == "IDLE_HEAT")
+
+    ContextReading(machineId == $id, context == "IDLE") over window:time(30m)
     accumulate(
         $t : TemperatureReading(machineId == $id, value > 60) over window:time(10m),
         $count : count($t)
     )
     eval($count >= 2)
 then
-    if ($m.getStatus() != MachineStatus.RISKY && $m.getStatus() != MachineStatus.CRITICAL) {
-        $m.setStatus(MachineStatus.RISKY);
-        $m.addRecommendation("Visoka temperatura u stanju mirovanja – proveri ventilaciju ili hlađenje.");
-        update($m);
-        System.out.println("CEP Context Rule fired: Idle overheating for " + $m.getName());
+    insert(new AlertLock($id, "IDLE_HEAT"));
+    modify($m) {
+        setStatus(MachineStatus.RISKY),
+        addRecommendation("CEP: Visoka temperatura u stanju mirovanja.")
     }
+    backwardService.triggerSimpleAlert($m, "CEP: Idle Warning", "Mašina se pregreva dok je u praznom hodu.");
 end
+
+//rule "Expire AlertLocks"
+//timer(int: 2m) // Every lock expires after 2 minutes to allow re-alerting later
+//when
+//    $lock : AlertLock()
+//then
+//    retract($lock);
+//end

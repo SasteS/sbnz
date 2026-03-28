@@ -7,13 +7,13 @@ import com.ftn.sbnz.model.models.IDiagnosticService
 global IDiagnosticService backwardService;
 
 // --- Vibration above normal threshold ---
-rule "Vibration slightly high (Suspicious)"
+rule "Vibration slightly high (Risky)"
 no-loop true
 when
-    $m : Machine( vibration > 7.1 && vibration <= 10, status == MachineStatus.NORMAL, context != OperationContext.HIGH_LOAD )
+    $m : Machine( vibration > 7.1 && vibration <= 10, status in (MachineStatus.NORMAL, MachineStatus.SUSPICIOUS), context != OperationContext.HIGH_LOAD )
 then
     modify($m) {
-        setStatus(MachineStatus.SUSPICIOUS),
+        setStatus(MachineStatus.RISKY),
         addRecommendation("Proveri balans rotora – blago povećane vibracije.")
     }
     System.out.println("Rule fired: Slightly high vibration → Suspicious for " + $m.getName());
@@ -22,13 +22,13 @@ then
 end
 
 // --- Very high vibration ---
-rule "Vibration very high (Risky)"
+rule "Vibration very high (Critical)"
 no-loop true
 when
-    $m : Machine( vibration > 10, status not in ( MachineStatus.RISKY,  MachineStatus.CRITICAL ), context != OperationContext.HIGH_LOAD )
+    $m : Machine( vibration > 10, status != MachineStatus.CRITICAL, context != OperationContext.HIGH_LOAD )
 then
     modify($m) {
-        setStatus(MachineStatus.RISKY),
+        setStatus(MachineStatus.CRITICAL),
         addRecommendation("Jako povećane vibracije – proveri balans i ležajeve.")
     }
     System.out.println("Rule fired: High vibration → Risky for " + $m.getName());

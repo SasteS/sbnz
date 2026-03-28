@@ -55,7 +55,7 @@ func simulateNormalOperation(ch *amqp.Channel, qName string, id string, name str
 			ID: id, Name: name,
 			Temperature:           70.0 + rand.Float64()*5,
 			Vibration:             4.0 + rand.Float64(),
-			CurrentPercentOfRated: 90.0,
+			CurrentPercentOfRated: 90.0 + rand.Float64(),
 			Status:                "NORMAL", Context: "NORMAL",
 		}
 		sendTelemetry(ch, qName, m)
@@ -112,6 +112,66 @@ func simulateVibrationEscalation(ch *amqp.Channel, qName string, id string, name
 	}
 }
 
+// --- NEW SCENARIO: Sustained Overload (Tests Rule 4) ---
+func simulateSustainedOverload(ch *amqp.Channel, qName string, id string, name string) {
+	log.Printf("[%s] START: Sustained Current Overload", name)
+	for {
+		m := Machine{
+			ID: id, Name: name,
+			Temperature: 70.0, Vibration: 4.0,
+			CurrentPercentOfRated: 110.0, // Over 100%
+			Status:                "NORMAL", Context: "NORMAL",
+		}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// --- NEW SCENARIO: Combined Anomaly (Tests Rule 5) ---
+func simulateCombinedAnomaly(ch *amqp.Channel, qName string, id string, name string) {
+	log.Printf("[%s] START: Combined Temp + Vib Failure", name)
+	for {
+		m := Machine{
+			ID: id, Name: name,
+			Temperature: 86.0, // High Temp
+			Vibration:   7.5,  // High Vib
+			Status:      "NORMAL", Context: "NORMAL",
+		}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// --- NEW SCENARIO: Post-Maintenance Trap (Tests Rule 6) ---
+func simulatePostMaintenanceTrap(ch *amqp.Channel, qName string, id string, name string) {
+	log.Printf("[%s] START: Post-Maintenance Heat Rise", name)
+	for {
+		m := Machine{
+			ID: id, Name: name,
+			Temperature: 82.0, // High for PM, but "Normal" for standard
+			Vibration:   4.0,
+			Status:      "NORMAL", Context: "POST_MAINTENANCE",
+		}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// --- NEW SCENARIO: Idle Overheat (Tests Rule 8) ---
+func simulateIdleOverheat(ch *amqp.Channel, qName string, id string, name string) {
+	log.Printf("[%s] START: Overheating while IDLE", name)
+	for {
+		m := Machine{
+			ID: id, Name: name,
+			Temperature: 65.0, // High for IDLE
+			Vibration:   1.0,
+			Status:      "NORMAL", Context: "IDLE",
+		}
+		sendTelemetry(ch, qName, m)
+		time.Sleep(3 * time.Second)
+	}
+}
+
 // --- MAIN ENTRY POINT ---
 
 func main() {
@@ -129,7 +189,8 @@ func main() {
 
 	// Machine 1: Test the Heating Logic Chain
 	//go simulateNormalOperation(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
-	go simulateHeatingChain(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
+	//go simulateHeatingChain(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
+	go simulateNormalOperation(ch, qTelemetry.Name, "db889345-07d2-4b59-9bf1-974c7119f246", "Pump A")
 
 	// Machine 2: Test the Vibration Logic Chain (Change ID to match your DB)
 	// go simulateVibrationEscalation(ch, qTelemetry.Name, "M2-UUID", "Compressor B")
