@@ -1,12 +1,13 @@
 package rules.cep
 
-dialect "mvel"
+dialect "java"
 
 import com.ftn.sbnz.model.models.Machine
 import com.ftn.sbnz.model.events.TemperatureReading
 import com.ftn.sbnz.model.events.VibrationReading
 import com.ftn.sbnz.model.enums.MachineStatus
 import com.ftn.sbnz.model.models.IDiagnosticService
+import com.ftn.sbnz.model.enums.OperationContext
 
 global IDiagnosticService backwardService;
 
@@ -179,6 +180,7 @@ then
         setStatus(MachineStatus.RISKY),
         addRecommendation("CEP: Dugotrajno preopterećenje strujom (>100%) detektovano - smanji struju.")
     }
+    System.out.println("CEP: Sustained Overload " + $m.getName());
     backwardService.triggerSimpleAlert($m, "CEP: Sustained Overload", "Preopterećenje traje duže od 15 minuta; smanji struju ili opterećenje.");
 end
 
@@ -201,6 +203,7 @@ then
         setStatus(MachineStatus.RISKY),
         addRecommendation("CEP: Kombinovana anomalija temperature i vibracija (10m prozor) – mogući problem sa ležajevima.")
     }
+    System.out.println("CEP: Multi-Sensor Anomaly " + $m.getName());
     backwardService.triggerSimpleAlert($m, "CEP: Multi-Sensor Anomaly", "Kombinacija povišene temperature i vibracija – mogući problem sa ležajevima.");
 end
 
@@ -246,6 +249,7 @@ then
         setStatus(MachineStatus.SUSPICIOUS),
         addRecommendation("CEP: Sumnjiv rast temperature odmah nakon servisa!")
     }
+    System.out.println("CEP: Post-Maint Warning " + $m.getName());
     backwardService.triggerSimpleAlert($m, "CEP: Post-Maint Warning", "Temperatura raste neuobičajeno brzo nakon servisiranja.");
 end
 
@@ -269,6 +273,7 @@ then
         setStatus(MachineStatus.SUSPICIOUS),
         addRecommendation("CEP: Visoke vibracije pri velikom opterećenju.")
     }
+    System.out.println("CEP: Load Warning " + $m.getName());
     backwardService.triggerSimpleAlert($m, "CEP: Load Warning", "Povišene vibracije detektovane tokom režima visokog opterećenja.");
 end
 
@@ -277,22 +282,29 @@ end
 rule "Idle machine with high temperature"
 no-loop true
 when
-    $m : Machine($id : id, status != MachineStatus.CRITICAL)
+    // 1. Only fire if the machine is NORMAL
+    $m : Machine($id : id, status == MachineStatus.NORMAL)
+
+    // 2. Only fire if there isn't already a lock
     not AlertLock(machineId == $id, alertType == "IDLE_HEAT")
 
-    ContextReading(machineId == $id, context == "IDLE") over window:time(30m)
+    ContextReading(machineId == $id, context == OperationContext.IDLE) over window:time(30m)
+
+    // 3. Logic: Average temp over the last 15 seconds is > 60
+    // This is much more stable than 'count'
     accumulate(
-        $t : TemperatureReading(machineId == $id, value > 60) over window:time(10m),
-        $count : count($t)
+        TemperatureReading(machineId == $id, $tVal : value) over window:time(15s),
+        $avg : average($tVal)
     )
-    eval($count >= 2)
+    eval($avg > 60.0)
 then
     insert(new AlertLock($id, "IDLE_HEAT"));
     modify($m) {
         setStatus(MachineStatus.RISKY),
         addRecommendation("CEP: Visoka temperatura u stanju mirovanja.")
     }
-    backwardService.triggerSimpleAlert($m, "CEP: Idle Warning", "Mašina se pregreva dok je u praznom hodu.");
+    System.out.println("CEP: Idle Warning triggered for " + $m.getName());
+    backwardService.triggerSimpleAlert($m, "CEP: Idle Warning", "Mašina se pregreva u praznom hodu.");
 end
 
 //rule "Expire AlertLocks"

@@ -9,8 +9,10 @@ import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class CepSessionManager {
@@ -22,56 +24,82 @@ public class CepSessionManager {
         this.cepSession.setGlobal("backwardService", diagnosticService);
     }
 
-    public void processTelemetry(Machine m) {
+    public synchronized Machine processTelemetry(Machine m) {
         Date now = new Date();
+        // Insert events under lock
         cepSession.insert(new TemperatureReading(m.getId(), m.getTemperature(), now));
         cepSession.insert(new VibrationReading(m.getId(), m.getVibration(), now));
         cepSession.insert(new CurrentReading(m.getId(), m.getCurrentPercentOfRated(), now));
         cepSession.insert(new ContextReading(m.getId(), m.getContext(), now));
 
-        FactHandle machineHandle = cepSession.getFactHandle(m);
+        FactHandle machineHandle = cepSession.getFactHandles(o ->
+                        o instanceof Machine && ((Machine)o).getId().equals(m.getId()))
+                .stream().findFirst().orElse(null);
+
+        Machine machineToReturn;
         if (machineHandle == null) {
             cepSession.insert(m);
+            machineToReturn = m;
         } else {
-            // This is crucial: it tells Drools the object was updated outside the engine
-            cepSession.update(machineHandle, m);
+            machineToReturn = (Machine) cepSession.getObject(machineHandle);
+            machineToReturn.setTemperature(m.getTemperature());
+            machineToReturn.setVibration(m.getVibration());
+            machineToReturn.setContext(m.getContext());
+            machineToReturn.setCurrentPercentOfRated(m.getCurrentPercentOfRated());
+            cepSession.update(machineHandle, machineToReturn);
         }
 
         cepSession.fireAllRules();
+        return machineToReturn;
     }
 
-    public void resetMachineHistory(String machineId) {
-        // We look for all 'AlertLock' facts in the stateful session that belong to this machine
-        Collection<FactHandle> handles = cepSession.getFactHandles(obj -> {
-            // Check if the fact is an AlertLock (declared in DRL)
-            if (obj.getClass().getSimpleName().equals("AlertLock")) {
-                try {
-                    // Get the machineId field via reflection
-                    String lockId = (String) obj.getClass().getMethod("getMachineId").invoke(obj);
-                    return machineId.equals(lockId);
-                } catch (Exception e) { return false; }
-            }
-            return false;
-        });
+    public synchronized void resetMachineHistory(String machineId) {
+        // 1. Identify all fact handles for this machine
+        List<FactHandle> toDelete = new ArrayList<>();
 
-        // Delete the locks so the machine is "clean"
-        for (FactHandle h : handles) {
+        for (FactHandle handle : cepSession.getFactHandles()) {
+            Object obj = cepSession.getObject(handle);
+            if (obj == null) continue;
+
+            String id = getMachineIdFromObject(obj);
+
+            if (machineId.equals(id)) {
+                // If it's the actual Machine object, just reset it
+                if (obj instanceof Machine) {
+                    Machine m = (Machine) obj;
+                    m.setStatus(com.ftn.sbnz.model.enums.MachineStatus.NORMAL);
+                    m.getRecommendations().clear();
+                    cepSession.update(handle, m);
+                } else {
+                    // Delete everything else (Readings, Locks, etc.)
+                    toDelete.add(handle);
+                }
+            }
+        }
+
+        // 2. Perform deletions
+        for (FactHandle h : toDelete) {
             cepSession.delete(h);
         }
 
-        // Also update the Machine status to NORMAL in the CEP memory
-        // so rules start checking it again
-        FactHandle machineHandle = cepSession.getFactHandles(o ->
-                o instanceof Machine && ((Machine)o).getId().equals(machineId)).stream().findFirst().orElse(null);
-
-        if (machineHandle != null) {
-            Machine m = (Machine) cepSession.getObject(machineHandle);
-            m.setStatus(com.ftn.sbnz.model.enums.MachineStatus.NORMAL);
-            m.getRecommendations().clear();
-            cepSession.update(machineHandle, m);
-        }
-
+        // 3. Force the engine to recognize the empty state
         cepSession.fireAllRules();
-        System.out.println(">>> Drools Memory Cleared for machine: " + machineId);
+        System.out.println(">>> [SESSION PURGED] Machine " + machineId + " is now clean.");
+    }
+
+    // Helper to extract ID regardless of class type
+    private String getMachineIdFromObject(Object obj) {
+        try {
+            if (obj instanceof com.ftn.sbnz.model.events.SensorReading) {
+                return ((com.ftn.sbnz.model.events.SensorReading) obj).getMachineId();
+            }
+            if (obj instanceof Machine) {
+                return ((Machine) obj).getId();
+            }
+            // For AlertLock (which is a declared DRL type)
+            return (String) obj.getClass().getMethod("getMachineId").invoke(obj);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

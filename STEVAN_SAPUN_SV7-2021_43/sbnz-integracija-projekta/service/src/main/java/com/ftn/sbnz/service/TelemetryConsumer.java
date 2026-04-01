@@ -31,31 +31,32 @@ public class TelemetryConsumer {
     @Transactional
     public void consumeTelemetry(Machine incomingMachine) {
         machineRepository.findById(incomingMachine.getId()).ifPresent(existingMachine -> {
-            // 1. Update existing machine
+            // 1. Set values on the DB instance
             existingMachine.setTemperature(incomingMachine.getTemperature());
             existingMachine.setVibration(incomingMachine.getVibration());
             existingMachine.setCurrentPercentOfRated(incomingMachine.getCurrentPercentOfRated());
             existingMachine.setContext(incomingMachine.getContext());
             existingMachine.setLastUpdated(incomingMachine.getLastUpdated());
 
-            cepSessionManager.processTelemetry(existingMachine);
+            // 2. IMPORTANT: Pass to CEP and GET BACK the instance Drools modified
+            Machine droolsModifiedMachine = cepSessionManager.processTelemetry(existingMachine);
 
-            // 2. Run Forward Logic
+            // 3. Run Forward Logic on the modified instance
             KieSession ksession = kieContainer.newKieSession("k-session");
             try {
                 ksession.setGlobal("backwardService", backwardRecursiveService);
-                ksession.insert(existingMachine);
+                // Insert the machine that potentially already has CEP changes
+                ksession.insert(droolsModifiedMachine);
                 ksession.fireAllRules();
             } finally {
                 ksession.dispose();
             }
 
-            // 3. Save
-            machineRepository.save(existingMachine);
+            // 4. Save the machine that Drools actually changed
+            machineRepository.save(droolsModifiedMachine);
 
-            // 4. BROADCAST the update to the Dashboard
-            // We use 'existingMachine' because it now contains the latest temp + Drools status
-            messagingTemplate.convertAndSend("/topic/machines", existingMachine);
+            // 5. Broadcast the machine that Drools actually changed
+            messagingTemplate.convertAndSend("/topic/machines", droolsModifiedMachine);
         });
     }
 }

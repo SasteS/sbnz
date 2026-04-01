@@ -9,13 +9,18 @@ global IDiagnosticService backwardService;
 rule "PostMaintenance - rising temperature"
 no-loop true
 when
-    $m : Machine( context == OperationContext.POST_MAINTENANCE, temperature > 80 && temperature < 90 )
+    // FIX: Only fire if the unit is currently NORMAL
+    $m : Machine( status == MachineStatus.NORMAL,
+                  context == OperationContext.POST_MAINTENANCE,
+                  temperature > 80 && temperature < 90 )
 then
     modify($m) {
         setStatus(MachineStatus.SUSPICIOUS),
         addRecommendation("Temperatura raste posle servisa – proveri servisni zahvat.")
     }
-    System.out.println("Temperatura raste posle servisa za " + $m.getName());
+    System.out.println("Forward Rule: Post-Maint Heat detected on " + $m.getName());
+
+    // Trigger deep diagnosis
     backwardService.triggerAutomaticDiagnosis($m, "Overheat", 80.0);
 end
 

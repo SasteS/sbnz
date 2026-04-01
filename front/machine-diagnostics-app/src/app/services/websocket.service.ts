@@ -51,18 +51,32 @@ export class WebsocketService {
     });
   }
 
-   private handleIncomingDiagnosis(data: any) {
-    // Add timestamp to the data
-    const newEntry = {
-      ...data,
-      timestamp: new Date()
-    };
+  public clearAlertsForMachine(machineId: string) {
+      const currentList = this.diagnosisSource.value;
+      // Filter out any alerts belonging to this machine
+      const filteredList = currentList.filter(item => 
+          item.machine?.id !== machineId && 
+          item.results[0]?.machineId !== machineId
+      );
+      this.diagnosisSource.next(filteredList);
+      console.log(`>>> UI Cleaned: Alerts removed for ${machineId}`);
+  }
 
-    // Add new diagnosis to the top of the list
-    const currentList = this.diagnosisSource.value;
-    this.diagnosisSource.next([newEntry, ...currentList]);
+  private handleIncomingDiagnosis(data: any) {
+      // Check for the special reset signal from Java
+      if (data.type === 'SYSTEM_RESET') {
+          const machineId = data.machineId;
+          // Wipe the Intelligence Feed for this machine
+          const currentList = this.diagnosisSource.value;
+          const filtered = currentList.filter(item => item.results[0].machineId !== machineId);
+          this.diagnosisSource.next(filtered);
+          console.log(">>> UI State Hard Reset for machine: " + machineId);
+          return; // Don't process this as a normal alert
+      }
 
-    // Optional: Still show a non-intrusive toast/snack bar
-    console.log("KBS Intelligence Feed Updated");
+      // Normal alert logic...
+      const newEntry = { ...data, timestamp: new Date() };
+      const currentList = this.diagnosisSource.value;
+      this.diagnosisSource.next([newEntry, ...currentList]);
   }
 }

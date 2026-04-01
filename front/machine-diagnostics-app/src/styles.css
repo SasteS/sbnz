@@ -1,4 +1,126 @@
-/* You can add global styles to this file, and also import other style files */
-
+You can add global styles to this file, and also import other style files
+/* 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+ */
+/* src/styles.css */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background-color: #0b0e14; /* Deep Obsidian Base */
+}
+
+body {
+  /* This creates the Sci-Fi Grid/Radar effect on the whole background */
+  background-image: 
+    linear-gradient(rgba(0, 242, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed; /* Keeps grid still while you scroll */
+  
+  color: #e0e0e0;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  min-height: 100vh;
+}
+
+/* Make sure your navbar stands out against the grid */
+/* .navbar {
+  background: rgba(13, 17, 23, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 242, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+} */
+
+/* --- CYBER NAV BAR --- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(13, 17, 23, 0.9) !important;
+  backdrop-filter: blur(15px);
+  padding: 0 30px;
+  height: 60px;
+  border-bottom: 1px solid rgba(0, 242, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo-text {
+  color: #00f2ff;
+  font-family: 'Courier New', monospace;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-right: 40px;
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+.nav-btn {
+  color: #8b949e !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 1px !important;
+  margin-right: 10px !important;
+  transition: all 0.3s ease !important;
+}
+
+.nav-btn:hover {
+  color: #00f2ff !important;
+  text-shadow: 0 0 8px rgba(0, 242, 255, 0.5);
+}
+
+/* --- THE DROPDOWN OVERLAY (Must be in styles.css) --- */
+
+/* Target the panel itself */
+.cyber-menu.mat-mdc-menu-panel, 
+.cyber-menu.mat-menu-panel {
+  background-color: rgba(22, 27, 34, 0.98) !important;
+  border: 1px solid rgba(0, 242, 255, 0.5) !important;
+  border-radius: 2px !important; /* Sharp industrial corners */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 242, 255, 0.1) !important;
+  min-width: 220px !important; /* Fixes the "narrow box" issue */
+  margin-top: 10px;
+}
+
+/* Target the items inside the menu */
+.cyber-menu .mat-mdc-menu-item,
+.cyber-menu .mat-menu-item {
+  color: #8b949e !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 1px;
+  height: 48px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Fix for the text/labels specifically */
+.cyber-menu .mdc-list-item__primary-text,
+.cyber-menu .mat-menu-item span {
+  color: #8b949e !important;
+  opacity: 1 !important;
+}
+
+/* THE HOVER EFFECT */
+.cyber-menu .mat-mdc-menu-item:hover,
+.cyber-menu .mat-menu-item:hover {
+  background-color: rgba(0, 242, 255, 0.1) !important;
+}
+
+/* Make text glow on hover */
+.cyber-menu .mat-mdc-menu-item:hover .mdc-list-item__primary-text,
+.cyber-menu .mat-menu-item:hover span {
+  color: #00f2ff !important;
+  text-shadow: 0 0 8px rgba(0, 242, 255, 0.5);
+}
+
+/* Target icons inside the menu */
+.cyber-menu mat-icon {
+  color: #00f2ff !important;
+  margin-right: 12px !important;
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+}

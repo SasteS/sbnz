@@ -1,10 +1,59 @@
-<nav class="navbar">
+<!-- <nav class="navbar">
   <div class="nav-container">
     <a routerLink="/machines" routerLinkActive="active">Machines</a>
     <a routerLink="/forward" routerLinkActive="active">Forward</a>
     <a routerLink="/backward" routerLinkActive="active">Backward</a>
     <a routerLink="/cep" routerLinkActive="active">CEP</a>
     <a routerLink="/template" routerLinkActive="active">Template</a>
+    <app-intelligence-feed></app-intelligence-feed>
+  </div>
+</nav>
+
+<main class="content">
+  <router-outlet></router-outlet>
+</main> -->
+
+<nav class="navbar">
+  <div class="nav-left">
+    <span class="logo-text">KBS_COMMAND_CENTER</span>
+    
+    <!-- DROPDOWN 1: AUTOMATIC / OPERATIONS -->
+    <button mat-button [matMenuTriggerFor]="opsMenu" class="nav-btn">
+      SYSTEM_CORE <mat-icon>expand_more</mat-icon>
+    </button>
+    <mat-menu #opsMenu="matMenu" class="cyber-menu">
+      <button mat-menu-item routerLink="/machines">
+        <mat-icon>dashboard</mat-icon>
+        <span>LIVE_DASHBOARD</span>
+      </button>
+    </mat-menu>
+
+    <!-- DROPDOWN 2: MANUAL / DIAGNOSTICS -->
+    <button mat-button [matMenuTriggerFor]="diagMenu" class="nav-btn">
+      SANDBOX <mat-icon>expand_more</mat-icon>
+    </button>
+    <mat-menu #diagMenu="matMenu" class="cyber-menu">
+      <button mat-menu-item routerLink="/forward">
+        <mat-icon>fast_forward</mat-icon>
+        <span>FORWARD_CHAINING</span>
+      </button>
+      <button mat-menu-item routerLink="/backward">
+        <mat-icon>history_edu</mat-icon>
+        <span>BACKWARD_CHAINING</span>
+      </button>
+      <button mat-menu-item routerLink="/cep">
+        <mat-icon>query_stats</mat-icon>
+        <span>CEP_LAB</span>
+      </button>
+      <button mat-menu-item routerLink="/template">
+        <mat-icon>description</mat-icon>
+        <span>RULE_TEMPLATES</span>
+      </button>
+    </mat-menu>
+  </div>
+
+  <div class="nav-right">
+    <!-- Keep your Brain Icon / Intelligence Feed here -->
     <app-intelligence-feed></app-intelligence-feed>
   </div>
 </nav>

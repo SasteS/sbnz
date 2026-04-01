@@ -61,4 +61,9 @@ export class MachineService {
     return this.http.post<any>(`${this.apiUrl}/cep/run-on-machine/${machineId}`, {});
   }
 
+  sendCommand(id: string, action: string): Observable<any> {
+      // Send the action string as the body
+      return this.http.post(`http://localhost:8080/api/machines/${id}/command`, action, { responseType: 'text' });
+  }
+
 }

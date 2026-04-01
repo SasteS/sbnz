@@ -6,7 +6,10 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/machines")
@@ -29,6 +32,10 @@ public class MachineController {
         this.machineService = machineService;
     }
 
+    // ADD THIS INJECTION
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     @PostMapping("/create")
     public ResponseEntity<Machine> createMachine(@RequestParam String name) {
         Machine saved = machineService.create(name);
@@ -42,24 +49,28 @@ public class MachineController {
 
     @PostMapping("/{id}/command")
     public ResponseEntity<Void> sendCommand(@PathVariable String id, @RequestBody String action) {
-        // Dispatch to Go Simulator
         String routingKey = "commands." + id;
         rabbitTemplate.convertAndSend(routingKey, action);
 
         if ("RESET".equals(action)) {
-            // 2. Resolve the case in the Database
             machineRepository.findById(id).ifPresent(m -> {
                 m.setStatus(MachineStatus.NORMAL);
                 m.getRecommendations().clear();
                 machineRepository.save(m);
+
+                // 1. Wipe Drools
+                cepSessionManager.resetMachineHistory(id);
+
+                // 2. BROADCAST A CLEAR MESSAGE: Tells Angular to empty the alert feed
+                Map<String, Object> clearMsg = new HashMap<>();
+                clearMsg.put("type", "SYSTEM_RESET");
+                clearMsg.put("machineId", id);
+                messagingTemplate.convertAndSend("/topic/diagnosis", clearMsg);
+
+                // 3. BROADCAST THE CLEAN MACHINE: Fixes the card color instantly
+                messagingTemplate.convertAndSend("/topic/machines", m);
             });
-
-            // 3. IMPORTANT: Wipe Drools Memory for this machine
-            // This prevents CEP rules from re-firing immediately after repair
-            cepSessionManager.resetMachineHistory(id);
         }
-
-        System.out.println(">>> System Command [" + action + "] dispatched to unit: " + id);
         return ResponseEntity.ok().build();
     }
 }
